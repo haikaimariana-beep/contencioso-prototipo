@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Contencioso · protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Contencioso V2 · protótipo do redesenho de navegação
+   Tokens copiados do staging (16/11/2026): cores, status, raios, fontes e sombras. */
+:root{
+  --brand-50:#eff6fd;--brand-100:#ddedff;--brand-200:#badbfe;--brand-300:#8ebff3;--brand-400:#5e9ad6;
+  --brand-500:#3675b2;--brand-600:#295e90;--brand-700:#1f4a73;--brand-800:#153758;--brand-900:#0f2840;--brand-950:#071727;
+  --on-brand:#fcfcfc;
+  --bg:#f9fafb;--surface:#fff;--surface-2:#f4f5f7;--border:#dfe1e4;--border-strong:#c7cbd0;
+  --fg:#14191f;--fg-muted:#555b63;--fg-subtle:#5f646a;--ring:var(--brand-500);
+  --shadow-1:0 1px 2px #10171f0f,0 1px 1px #10171f0a;--shadow-2:0 8px 24px #10171f1a,0 2px 6px #10171f0f;
+  --positive:#00682c;--negative:#b71824;--caution:#7d4a07;
+  --state-created:#5c646f;--state-processing:#006c9e;--state-needs_documents:#81520a;--state-needs_review:#a83a00;
+  --state-calculated:#6d47b8;--state-approved:#006e3a;--state-guide_requested:#006d7c;--state-guide_ready:#00675e;
+  --state-paid:#006915;--state-archived:#5f6469;
+  --r-control:10px;--r-card:12px;--ease:cubic-bezier(.2,.8,.2,1);
+  --font:"Inter","Inter Variable",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono","JetBrains Mono Variable",ui-monospace,SFMono-Regular,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1015;--surface:#14191f;--surface-2:#1d2229;--border:#2b3138;--border-strong:#414851;
+  --fg:#eff2f5;--fg-muted:#a7abb1;--fg-subtle:#90969d;--ring:var(--brand-400);
+  --shadow-1:0 1px 2px #0006;--shadow-2:0 8px 24px #00000080,0 2px 6px #00000059;
+  --positive:#5ac576;--negative:#f97770;--caution:#edb345;
+  --state-created:#9ca5b1;--state-processing:#5abdf2;--state-needs_documents:#f3b94c;--state-needs_review:#ff995c;
+  --state-calculated:#b89eff;--state-approved:#63d18f;--state-guide_requested:#5fc9db;--state-guide_ready:#63ccc0;
+  --state-paid:#7bd77f;--state-archived:#94999e;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0c1015;--surface:#14191f;--surface-2:#1d2229;--border:#2b3138;--border-strong:#414851;
+  --fg:#eff2f5;--fg-muted:#a7abb1;--fg-subtle:#90969d;--ring:var(--brand-400);
+  --shadow-1:0 1px 2px #0006;--shadow-2:0 8px 24px #00000080,0 2px 6px #00000059;
+  --positive:#5ac576;--negative:#f97770;--caution:#edb345;
+  --state-created:#9ca5b1;--state-processing:#5abdf2;--state-needs_documents:#f3b94c;--state-needs_review:#ff995c;
+  --state-calculated:#b89eff;--state-approved:#63d18f;--state-guide_requested:#5fc9db;--state-guide_ready:#63ccc0;
+  --state-paid:#7bd77f;--state-archived:#94999e;color-scheme:dark;}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+[id]{scroll-margin-top:72px}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+.mono{font-family:var(--mono)}
+.muted{color:var(--fg-muted)}.subtle{color:var(--fg-subtle)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:6px}
+svg.lucide{width:16px;height:16px;stroke-width:2;flex-shrink:0}
+
+/* ---------- casca ---------- */
+.skip{position:absolute;left:-999px;top:8px;z-index:100;background:var(--surface);padding:8px 12px;border-radius:var(--r-control);border:1px solid var(--border)}
+.skip:focus{left:8px}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100dvh}
+.app.with-panel{grid-template-columns:240px 1fr 420px}
+.sidebar{position:sticky;top:0;height:100dvh;display:flex;flex-direction:column;gap:12px;background:var(--surface);border-right:1px solid var(--border);padding:0 12px 16px}
+.brand{display:flex;align-items:center;gap:10px;height:56px;padding:0 12px;font-weight:600}
+.brand .logo{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:var(--brand-600);color:var(--on-brand);font-size:12px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:var(--r-control);color:var(--fg-muted);font-size:14px;line-height:20px}
+.nav a:hover{color:var(--fg)}
+.nav a.active{background:var(--surface-2);color:var(--fg)}
+.nav .count{margin-left:auto;font-size:12px;font-weight:500;padding:0 7px;border-radius:999px;background:color-mix(in oklch,var(--state-needs_review) 14%,transparent);color:var(--state-needs_review)}
+.sidebar .foot{margin-top:auto;padding:0 12px;font-weight:600;letter-spacing:.3em;color:var(--fg-muted);font-size:12px}
+.main{min-width:0}
+.topbar{position:sticky;top:0;z-index:30;height:56px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--border);background:color-mix(in oklch,var(--bg) 80%,transparent);backdrop-filter:blur(12px)}
+.icon-btn.menu-btn{display:none}
+.search-btn{display:flex;align-items:center;gap:8px;width:360px;max-width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--r-control);background:var(--surface);color:var(--fg-subtle);text-align:left}
+.search-btn kbd{margin-left:auto}
+.search-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--border);border-radius:5px;padding:1px 5px;color:var(--fg-subtle)}
+.topbar .spacer{flex:1}
+.icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:var(--r-control);border:0;background:transparent;color:var(--fg-muted)}
+.icon-btn:hover{background:var(--surface-2);color:var(--fg)}
+.user{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--border);border-radius:999px;background:transparent}
+.avatar{display:grid;place-items:center;width:26px;height:26px;border-radius:999px;background:var(--brand-600);color:var(--on-brand);font-size:11px;font-weight:600;flex-shrink:0}
+.avatar.sm{width:22px;height:22px;font-size:10px}
+.avatar.sys{background:var(--surface-2);color:var(--fg-muted);border:1px solid var(--border)}
+.content{padding:24px 32px 64px;max-width:1240px}
+.proto-note{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--fg-subtle);margin-bottom:16px}
+
+/* ---------- componentes ---------- */
+h1{font-size:24px;line-height:32px;font-weight:600;letter-spacing:-.01em;margin:0}
+h1.mono{font-size:20px;line-height:28px;letter-spacing:-.5px}
+h2{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0}
+h3{font-size:14px;font-weight:600;margin:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);box-shadow:var(--shadow-1)}
+.card-h{display:flex;align-items:center;gap:12px;padding:16px 20px 0}
+.card-b{padding:16px 20px 20px}
+.card-h p{margin:2px 0 0;font-size:12px;color:var(--fg-muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border-radius:var(--r-control);border:1px solid var(--border-strong);background:var(--surface);font-size:12px;font-weight:500;white-space:nowrap;box-shadow:var(--shadow-1);transition:background .15s var(--ease),transform .15s}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--brand-600);border-color:var(--brand-600);color:var(--on-brand)}
+.btn.primary:hover{background:var(--brand-700)}
+.btn.ghost{border-color:transparent;box-shadow:none;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.danger{color:var(--negative)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.lg{height:36px;font-size:13px;padding:0 14px}
+.link{color:var(--brand-400);font-weight:500;display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:0}
+:root:not([data-theme="dark"]) .link{color:var(--brand-600)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .link{color:var(--brand-300)}}
+.badge{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:999px;padding:2px 10px;font-size:12px;line-height:16px;font-weight:500;color:var(--c,var(--fg-muted));background:color-mix(in oklch,var(--c,var(--fg-muted)) 12%,transparent)}
+.badge::before{content:"";width:6px;height:6px;border-radius:99px;background:currentColor}
+.badge.plain::before{display:none}
+.badge.outline{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in oklch,var(--c) 45%,transparent)}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px solid var(--border);background:transparent;font-size:12px;color:var(--fg-muted)}
+.chip .n{color:var(--fg-subtle)}
+.chip.on{border-color:var(--brand-500);background:color-mix(in oklch,var(--brand-500) 14%,transparent);color:var(--fg)}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:1px 8px;border-radius:999px;border:1px solid var(--border);color:var(--fg-muted)}
+.tag.client{border-color:color-mix(in oklch,var(--brand-400) 50%,transparent);color:var(--fg)}
+.field{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--fg-muted)}
+.input,.select{height:36px;border:1px solid var(--border);border-radius:var(--r-control);background:var(--surface);color:var(--fg);padding:0 10px;font:inherit;font-size:13px}
+.input:focus,.select:focus{outline:2px solid var(--ring);outline-offset:0}
+.help{font-size:12px;color:var(--fg-subtle)}
+.err{font-size:12px;color:var(--negative)}
+.row{display:flex;align-items:center;gap:12px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sep{height:1px;background:var(--border);margin:16px 0}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.kv dt{font-size:12px;color:var(--fg-subtle)}
+.kv dd{margin:2px 0 0;font-weight:500}
+.money{font-family:var(--font);font-variant-numeric:tabular-nums;font-weight:600}
+.big{font-size:22px;letter-spacing:-.01em}
+.callout{display:flex;gap:12px;padding:14px 16px;border-radius:var(--r-card);border:1px solid color-mix(in oklch,var(--c,var(--brand-400)) 40%,var(--border));background:color-mix(in oklch,var(--c,var(--brand-400)) 8%,var(--surface))}
+.callout .lucide{color:var(--c,var(--brand-400));margin-top:2px}
+.callout p{margin:2px 0 0;color:var(--fg-muted);font-size:13px}
+
+/* tabela */
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:var(--r-card);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{position:sticky;top:0;text-align:left;font-weight:500;font-size:12px;color:var(--fg-subtle);background:var(--surface-2);padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in oklch,var(--surface-2) 60%,transparent)}
+td .mono a{color:var(--brand-400)}
+:root:not([data-theme="dark"]) td .mono a{color:var(--brand-600)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) td .mono a{color:var(--brand-300)}}
+.num{text-align:right;white-space:nowrap}
+
+/* abas */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-top:24px;overflow-x:auto}
+.tabs a{position:relative;display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:14px;color:var(--fg-muted);white-space:nowrap}
+.tabs a:hover{color:var(--fg)}
+.tabs a[aria-selected="true"]{color:var(--fg);font-weight:500}
+.tabs a[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;border-radius:2px;background:var(--brand-400)}
+.tabs .cnt{font-size:11px;font-weight:500;padding:0 6px;border-radius:99px;background:var(--surface-2);color:var(--fg-muted)}
+.tabs .cnt.alert{background:color-mix(in oklch,var(--state-needs_review) 16%,transparent);color:var(--state-needs_review)}
+.subtabs{display:flex;gap:4px;margin:16px 0}
+
+/* jornada */
+.journey{padding:20px}
+.steps{display:grid;grid-template-columns:repeat(8,1fr);position:relative}
+.steps::before{content:"";position:absolute;top:13px;left:6%;right:6%;height:2px;background:var(--border)}
+.step{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:12px;color:var(--fg-subtle);background:none;border:0;padding:0 4px;border-radius:8px}
+.step .dot{display:grid;place-items:center;width:28px;height:28px;border-radius:99px;border:2px solid var(--border-strong);background:var(--surface);font-size:11px;font-weight:600;color:var(--fg-muted);z-index:1}
+.step.done .dot{background:var(--brand-600);border-color:var(--brand-600);color:var(--on-brand)}
+.step.current .dot{border-color:var(--state-needs_review);color:var(--state-needs_review);box-shadow:0 0 0 4px color-mix(in oklch,var(--state-needs_review) 18%,transparent)}
+.step.current{color:var(--fg);font-weight:600}
+.step.locked .dot{border-style:dashed}
+.step:hover .lbl{text-decoration:underline;text-underline-offset:3px}
+.step .sub{font-weight:400;font-size:11px;color:var(--fg-subtle)}
+
+/* "Agora" */
+.now{display:grid;grid-template-columns:1fr auto;gap:20px;padding:18px 20px;border-top:1px solid var(--border)}
+.now .who{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;font-size:12px;color:var(--fg-subtle)}
+.now .who b{color:var(--fg);font-size:13px}
+.now .lead{font-size:15px;font-weight:600}
+.now .why{margin:4px 0 12px;color:var(--fg-muted)}
+.mode{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 10px;border-radius:99px}
+.mode.person{color:var(--state-needs_review);background:color-mix(in oklch,var(--state-needs_review) 12%,transparent)}
+.mode.system{color:var(--state-processing);background:color-mix(in oklch,var(--state-processing) 12%,transparent)}
+.mode.wait{color:var(--fg-muted);background:var(--surface-2)}
+.spin{animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}*{transition:none!important}}
+
+/* checklist para aprovar */
+.check{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--border)}
+.check:first-child{border-top:0}
+.check .ic{display:grid;place-items:center;width:24px;height:24px;border-radius:99px;flex-shrink:0}
+.check .ic.bad{color:var(--state-needs_review);background:color-mix(in oklch,var(--state-needs_review) 14%,transparent)}
+.check .ic.ok{color:var(--positive);background:color-mix(in oklch,var(--positive) 14%,transparent)}
+.check .ic.info{color:var(--fg-muted);background:var(--surface-2)}
+.check h3{font-size:13px}
+.check p{margin:2px 0 8px;color:var(--fg-muted);font-size:13px}
+.choice{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-control);margin-top:6px;cursor:pointer}
+.choice:has(input:checked){border-color:var(--brand-500);background:color-mix(in oklch,var(--brand-500) 8%,transparent)}
+
+/* fila */
+.queue-item{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px 20px;border-top:1px solid var(--border)}
+.queue-item:hover{background:color-mix(in oklch,var(--surface-2) 60%,transparent)}
+.queue-item .t{font-size:13px;font-weight:600}
+.queue-item .r{font-size:13px;color:var(--fg-muted)}
+.queue-item .meta{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:12px;color:var(--fg-subtle);flex-wrap:wrap}
+.funnel{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--surface-2);gap:2px}
+.funnel span{display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:12px;color:var(--fg-muted)}
+.legend a{display:inline-flex;gap:6px;align-items:center}
+.legend i{width:8px;height:8px;border-radius:99px;display:inline-block}
+.legend b{color:var(--fg)}
+
+/* verbas */
+details.verba{border:1px solid var(--border);border-radius:var(--r-card);background:var(--surface)}
+details.verba+details.verba{margin-top:8px}
+details.verba summary{list-style:none;display:grid;grid-template-columns:auto 1fr repeat(4,110px);gap:12px;align-items:center;padding:12px 16px;cursor:pointer}
+details.verba summary::-webkit-details-marker{display:none}
+details.verba[open] summary .chev{transform:rotate(90deg)}
+details.verba .in{padding:0 16px 16px;border-top:1px solid var(--border)}
+.lbl-s{font-size:11px;color:var(--fg-subtle);display:block}
+.quote{border-left:2px solid var(--border-strong);padding:4px 12px;margin:8px 0;font-family:var(--mono);font-size:12px;color:var(--fg-muted)}
+.fl{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:1px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:var(--fg)}
+.fl:hover{border-color:var(--brand-400)}
+
+/* painel lateral (chat e folha) */
+.side{position:sticky;top:0;height:100dvh;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column}
+.side[hidden]{display:none}
+.side-h{display:flex;align-items:center;gap:8px;height:56px;padding:0 12px 0 16px;border-bottom:1px solid var(--border)}
+.side-h h2{font-size:14px}
+.side-b{flex:1;overflow:auto;padding:16px}
+.side-f{border-top:1px solid var(--border);padding:12px}
+.privacy{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 12px;border-radius:var(--r-control);background:var(--surface-2);color:var(--fg-muted);margin-bottom:12px}
+.msg{padding:10px 12px;border-radius:var(--r-control);background:var(--surface-2);margin-bottom:10px;font-size:13px}
+.msg.me{background:color-mix(in oklch,var(--brand-500) 14%,transparent);margin-left:40px}
+.diff{width:100%;font-size:12px;margin-top:8px}
+.diff td{padding:6px 8px}
+.page{background:#fff;color:#111;border-radius:6px;padding:24px 22px;font:12px/1.7 Georgia,serif;box-shadow:var(--shadow-1)}
+.page mark{background:#ffe58a;color:#111;padding:0 2px}
+.page .pg{font:11px var(--mono);color:#777;text-align:right;margin-bottom:8px}
+
+/* paleta Ctrl+K e diálogos */
+.overlay{position:fixed;inset:0;z-index:60;background:#0008;display:grid;place-items:start center;padding-top:12vh}
+.overlay[hidden]{display:none}
+.palette{width:min(620px,92vw);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);box-shadow:var(--shadow-2);overflow:hidden}
+.palette input{width:100%;height:48px;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--fg);padding:0 16px 0 44px;font:inherit;font-size:15px;outline:none}
+.palette .in-wrap{position:relative}
+.palette .in-wrap .lucide{position:absolute;left:16px;top:16px;color:var(--fg-subtle)}
+.palette .res{max-height:420px;overflow:auto;padding:6px}
+.palette .grp{font-size:11px;color:var(--fg-subtle);padding:10px 10px 4px;text-transform:uppercase;letter-spacing:.04em}
+.palette a{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:13px}
+.palette a[aria-selected="true"],.palette a:hover{background:var(--surface-2)}
+.palette .empty{padding:24px;text-align:center;color:var(--fg-muted)}
+.dialog{width:min(480px,92vw);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-card);box-shadow:var(--shadow-2);padding:20px}
+.dialog p{color:var(--fg-muted)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:70;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:var(--r-control);font-size:13px;box-shadow:var(--shadow-2)}
+.toast[hidden]{display:none}
+.menu{position:absolute;right:0;top:36px;z-index:40;min-width:240px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-control);box-shadow:var(--shadow-2);padding:6px}
+.menu[hidden]{display:none}
+.menu button{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:8px 10px;border:0;background:none;border-radius:8px;font-size:13px}
+.menu button:hover{background:var(--surface-2)}
+.menu small{display:block;color:var(--fg-subtle);font-size:11px}
+
+/* uploads */
+.drop{border:1.5px dashed var(--border-strong);border-radius:var(--r-card);padding:28px;text-align:center;background:var(--surface)}
+.thumb{width:84px;height:110px;border-radius:6px;background:#fff;color:#333;font:7px/1.4 Georgia,serif;padding:8px;overflow:hidden;box-shadow:var(--shadow-1);flex-shrink:0}
+.sugg{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-control);margin-top:6px;cursor:pointer;font-size:13px}
+.sugg:has(input:checked){border-color:var(--brand-500);background:color-mix(in oklch,var(--brand-500) 8%,transparent)}
+
+/* ---------- camada "O que mudou" (anotação do protótipo, fora da identidade de propósito) ---------- */
+:root{--note:#a21caf;--note-bg:#fdf4ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--note:#f0abfc;--note-bg:#3b0a3f}}
+:root[data-theme="dark"]{--note:#f0abfc;--note-bg:#3b0a3f}
+.chg{display:none;align-items:center;gap:4px;height:20px;padding:0 8px;margin:0 4px;border-radius:999px;border:1px dashed var(--note);background:var(--note-bg);color:var(--note);font:600 11px/1 var(--font);white-space:nowrap;vertical-align:middle;cursor:pointer}
+.chg svg.lucide{width:12px;height:12px}
+.show-chg .chg{display:inline-flex}
+.chg-toggle{display:inline-flex;white-space:nowrap;align-items:center;gap:6px;height:32px;padding:0 10px;border-radius:999px;border:1px dashed var(--note);background:var(--note-bg);color:var(--note);font-size:12px;font-weight:600}
+.chg-toggle[aria-pressed="false"]{background:transparent;opacity:.75}
+.chg-pop{position:absolute;z-index:80;width:min(380px,92vw);background:var(--surface);border:1px solid var(--note);border-radius:var(--r-card);box-shadow:var(--shadow-2);padding:14px 16px;font-size:13px}
+.chg-pop[hidden]{display:none}
+.chg-pop h3{color:var(--note);display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.chg-pop dl{margin:0;display:grid;gap:8px}
+.chg-pop dt{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--fg-subtle)}
+.chg-pop dd{margin:2px 0 0}
+.chg-pop .antes{color:var(--fg-muted)}
+.chg-list a{display:block;padding:10px 0;border-top:1px solid var(--border)}
+.chg-list b{color:var(--note)}
+.chg-banner{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:16px;border-radius:var(--r-control);border:1px dashed var(--note);background:var(--note-bg);font-size:13px}
+.chg-banner[hidden]{display:none}
+.chg-target{outline:2px dashed var(--note);outline-offset:4px;border-radius:8px}
+
+.term{border-bottom:1px dotted var(--fg-subtle);cursor:help}
+.term:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.term-pop{position:absolute;z-index:85;max-width:300px;background:var(--fg);color:var(--bg);padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.45;box-shadow:var(--shadow-2)}
+.term-pop[hidden]{display:none}
+.chip[disabled]{opacity:.45;cursor:default}
+.quicknav{display:none;gap:6px;overflow-x:auto;margin:14px 0 4px;padding-bottom:2px}
+.quicknav a{flex-shrink:0;height:30px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;border:1px solid var(--border);font-size:12px;color:var(--fg-muted)}
+
+/* ---------- responsivo ---------- */
+@media (max-width:1100px){.app.with-panel{grid-template-columns:240px 1fr}.app.with-panel .side{position:fixed;right:0;top:0;width:min(420px,100vw);z-index:50;box-shadow:var(--shadow-2)}}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;z-index:55;width:260px;transform:translateX(-100%);transition:transform .2s var(--ease)}
+  .sidebar.open{transform:none;box-shadow:var(--shadow-2)}
+  .icon-btn.menu-btn{display:inline-grid}
+  .search-btn{width:auto;flex:1;min-width:0}
+  .topbar .spacer{display:none}
+  .search-btn kbd,.user .nm{display:none}
+  .chg-toggle span{display:none}
+  .content{padding:16px 16px 48px}
+  .grid2{grid-template-columns:1fr}
+  .steps{display:flex;overflow-x:auto;gap:4px;scroll-snap-type:x mandatory;padding-bottom:4px}
+  .steps::before{display:none}
+  .step{min-width:84px;scroll-snap-align:center}
+  .now{grid-template-columns:1fr}
+  .now .who{align-items:flex-start;text-align:left}
+  details.verba summary{grid-template-columns:auto 1fr auto}
+  details.verba summary .hide-sm{display:none}
+  .queue-item{grid-template-columns:1fr;gap:8px}
+  .hide-sm{display:none}
+  table.responsive thead{display:none}
+  table.responsive tr{display:block;padding:12px;border-bottom:1px solid var(--border)}
+  table.responsive td{display:block;position:relative;border:0;padding:4px 0 4px 112px;text-align:left;min-height:26px}
+  table.responsive td::before{content:attr(data-l);position:absolute;left:0;top:6px;width:104px;color:var(--fg-subtle);font-size:12px}
+  table.responsive td.num{text-align:left}
+  .quicknav{display:flex}
+  .order-sm-first{order:-1}
+}
+
+/* processo.html */
+
+  .head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+  .totals{display:flex;gap:24px;text-align:right}
+  .totals dt{font-size:12px;color:var(--fg-subtle)}.totals dd{margin:0}
+  .ask-fab{position:fixed;right:20px;bottom:20px;z-index:20;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--border-strong);background:var(--surface);box-shadow:var(--shadow-2);font-size:13px;font-weight:500}
+  .with-panel .ask-fab,.with-panel .chg-fab{display:none}
+  .with-panel .head{grid-template-columns:1fr}.with-panel .totals{text-align:left}
+  .with-panel .steps .sub{display:none}
+  .mobile-bar{display:none}
+  .phase{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .phase .card{padding:14px 16px;box-shadow:none}
+  .mm{width:100%;font-size:12px;margin-top:6px}.mm th{position:static}
+  @media (max-width:820px){.head{grid-template-columns:1fr}.totals{text-align:left}
+    .mobile-bar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:25;gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);box-shadow:var(--shadow-2)}
+    .mobile-bar .btn{flex:1;height:40px}.mobile-bar .btn.icon{flex:0 0 40px;padding:0}.ask-fab,.chg-fab{display:none}.content{padding-bottom:96px}}
+
+</style>
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<!-- Contencioso V2 · protótipo do redesenho da navegação (16/11/2026). Arquivo único: as telas Painel, Processos, Processo e Uploads estão embutidas e a navegação usa o endereço depois do "#". Precisa de internet só para fontes e ícones. -->
+<script>window.PAGES = {"index.html": {"title": "Painel · Contencioso", "tpl": "\n  <div class=\"proto-note\"><i data-lucide=\"flask-conical\"><\/i>Protótipo do redesenho · números de processo e tribunais do staging de 16/11/2026; nomes de pessoas fictícios; motivos, responsáveis e valores ilustrativos.<\/div>\n  <div class=\"row\" style=\"justify-content:space-between;flex-wrap:wrap;gap:16px\">\n    <div><h1>Olá, Mariana<\/h1><p class=\"muted\" id=\"sub\" style=\"margin:4px 0 0\"><\/p><\/div>\n    <label class=\"field\" style=\"flex-direction:row;align-items:center;gap:8px\">Ver a fila de\n      <select class=\"select\" id=\"role\" aria-label=\"Ver a fila de qual papel\">\n        <option value=\"helena\">Aprovação (Helena Duarte)<\/option>\n        <option value=\"rafael\">Conferência (Rafael Moura)<\/option>\n        <option value=\"thiago\">Conferência (Thiago Lopes)<\/option>\n        <option value=\"bruna\">Entrada de documentos (Bruna Martins)<\/option>\n        <option value=\"todos\">Toda a equipe<\/option>\n      <\/select><\/label>\n  <\/div>\n\n  <nav class=\"quicknav\" aria-label=\"Atalhos do Painel\"><a href=\"#qT\">Sua fila<\/a><a href=\"#eT\">Com quem está<\/a><a href=\"#cT\">Carteira por cliente<\/a><a href=\"#jT\">Jornada<\/a><\/nav>\n  <section class=\"card\" style=\"margin-top:20px\" aria-labelledby=\"qT\">\n    <div class=\"card-h\"><div><h2 id=\"qT\">O que espera por você <span data-c=\"painel-fila\"><\/span><\/h2><p>Cada item diz o motivo e leva direto ao lugar de resolver.<\/p><\/div><span class=\"spacer\" style=\"flex:1\"><\/span><span class=\"money big\" id=\"qN\"><\/span><\/div>\n    <div id=\"queue\" style=\"margin-top:12px\"><\/div>\n  <\/section>\n\n  <div class=\"grid2\" style=\"margin-top:16px\">\n    <section class=\"card\" aria-labelledby=\"eT\">\n      <div class=\"card-h\"><div><h2 id=\"eT\">Com quem está cada processo <span data-c=\"painel-comquem\"><\/span><\/h2><p>Quem precisa agir e quantos processos estão com cada pessoa.<\/p><\/div><\/div>\n      <div class=\"card-b\" id=\"team\"><\/div>\n    <\/section>\n    <section class=\"card\" aria-labelledby=\"cT\">\n      <div class=\"card-h\"><div><h2 id=\"cT\">Carteira por cliente <span data-c=\"painel-carteira\" data-l=\"Novo\"><\/span><\/h2><p>Provisão (estimativa antes da sentença) separada da condenação.<\/p><\/div><\/div>\n      <div class=\"card-b\" style=\"padding-top:8px\"><div class=\"table-wrap\" style=\"border:0\"><table class=\"responsive\" id=\"carteira\"><\/table><\/div><\/div>\n    <\/section>\n  <\/div>\n\n  <section class=\"card\" style=\"margin-top:16px\" aria-labelledby=\"jT\">\n    <div class=\"card-h\"><div><h2 id=\"jT\">Jornada dos processos <span data-c=\"painel-funil\"><\/span><\/h2><p>Quantos processos há em cada etapa. Clique para ver a lista.<\/p><\/div><span style=\"flex:1\"><\/span><a class=\"btn\" href=\"processos.html\">Ver todos <i data-lucide=\"arrow-right\"><\/i><\/a><\/div>\n    <div class=\"card-b\"><div class=\"funnel\" id=\"funnel\"><\/div><div class=\"legend\" id=\"legend\"><\/div><\/div>\n  <\/section>\n", "js": "\nconst { $, esc, money, badge, person, valueTag, clientTag, icons, shell, myQueue, D } = UI;\nshell(\"Painel\");\nconst ACTION = { needs_review: [\"Resolver\", \"wrench\"], needs_documents: [\"Enviar documento\", \"upload\"], calculated: [\"Conferir e aprovar\", \"badge-check\"] };\nconst TAB = { needs_review: \"calculo\", needs_documents: \"documentos\", calculated: \"calculo\" };\nfunction item(p) {\n  const [lbl, ic] = ACTION[p.estado];\n  return `<div class=\"queue-item\">\n    ${person(p.resp, false)}\n    <div style=\"min-width:0\"><div class=\"t\"><a href=\"processo.html?id=${p.id}\"><span class=\"mono\">${p.numero}<\/span><\/a> · <span class=\"muted\" style=\"font-weight:400\">${esc(p.autor)}<\/span><\/div>\n      <div class=\"r\">${esc(p.motivo)}<\/div>\n      <div class=\"meta\">${badge(p.estado)} ${clientTag(p)} ${valueTag(p)} ${p.valor != null && p.tipo !== \"none\" ? `<span class=\"money\">${money(p.valor)}<\/span>` : \"\"} <span>· ${D.TEAM[p.resp].nome}, ${p.data.slice(0, 5)}<\/span><\/div><\/div>\n    <a class=\"btn ${p.estado === \"calculated\" ? \"primary\" : \"\"}\" href=\"processo.html?id=${p.id}&aba=${TAB[p.estado]}\"><i data-lucide=\"${ic}\"><\/i>${lbl}<\/a><\/div>`;\n}\nfunction uploadItem(u) {\n  return `<div class=\"queue-item\">${person(u.por, false)}\n    <div><div class=\"t\">Arquivo sem processo ${UI.chg(\"painel-upload\")} · <span class=\"muted\" style=\"font-weight:400\">${esc(u.nome)}<\/span><\/div>\n    <div class=\"r\">O sistema não achou o número do processo no texto. Sugestão: Camila Rezende Porto (4035231-09).<\/div>\n    <div class=\"meta\"><span class=\"badge\" style=\"--c:var(--state-needs_documents)\">Aguardando sua escolha<\/span><span>· enviado por ${D.TEAM[u.por].nome}, ${u.enviado.slice(0, 5)}<\/span><\/div><\/div>\n    <a class=\"btn\" href=\"uploads.html\"><i data-lucide=\"link\"><\/i>Escolher processo<\/a><\/div>`;\n}\nfunction render() {\n  const role = $(\"#role\").value;\n  const q = myQueue().filter((p) => role === \"todos\" || p.resp === role).sort((a, b) => (a.estado === \"calculated\" ? -1 : 1) - (b.estado === \"calculated\" ? -1 : 1) || b.sort.localeCompare(a.sort));\n  const ups = role === \"bruna\" || role === \"todos\" ? D.UPLOADS_PENDENTES : [];\n  $(\"#queue\").innerHTML = (ups.map(uploadItem).join(\"\") + q.map(item).join(\"\")) || `<div class=\"card-b muted\">Nada esperando por você agora.<\/div>`;\n  $(\"#qN\").textContent = q.length + ups.length;\n  const apr = myQueue().filter((p) => p.estado === \"calculated\").length;\n  $(\"#sub\").textContent = role === \"helena\" ? `${apr} memórias conferidas aguardam sua aprovação · 1 prazo vence em 20/11` : `${q.length + ups.length} itens nesta fila`;\n  icons();\n}\n// com quem está\nconst groups = {};\nD.procs.forEach((p) => { (groups[p.resp] ||= []).push(p); });\n$(\"#team\").innerHTML = Object.entries(groups).sort((a, b) => b[1].length - a[1].length).map(([k, ps]) => {\n  const t = D.TEAM[k];\n  const why = k === \"sistema\" ? \"Provisões feitas, aguardando a sentença chegar aos autos\" : [...new Set(ps.map((p) => D.STATES[p.estado].label))].join(\" · \");\n  return `<div class=\"row\" style=\"padding:10px 0;border-top:1px solid var(--border)\">${person(k, false)}<div style=\"flex:1;min-width:0\"><b>${t.nome}<\/b> <span class=\"subtle\">· ${t.papel}<\/span><div class=\"help\">${why}<\/div><\/div><span class=\"money\">${ps.length}<\/span><\/div>`;\n}).join(\"\").replace('border-top:1px solid var(--border)', '');\n// carteira por cliente\nconst byC = {};\nD.procs.forEach((p) => { const c = p.cliente || p.sugestao || \"Sem cliente\"; const o = (byC[c] ||= { n: 0, prov: 0, cond: 0, conf: 0 }); o.n++; if (!p.cliente) o.conf++; if (p.tipo === \"prov\") o.prov += p.valor || 0; if (p.tipo === \"cond\") o.cond += p.valor || 0; });\n$(\"#carteira\").innerHTML = `<thead><tr><th>Cliente<\/th><th class=\"num\">Processos<\/th><th class=\"num\">Provisão<\/th><th class=\"num\">Condenação<\/th><\/tr><\/thead><tbody>` +\n  Object.entries(byC).sort((a, b) => b[1].n - a[1].n).map(([c, o]) => `<tr><td data-l=\"Cliente\"><a class=\"link\" href=\"processos.html?cliente=${encodeURIComponent(c)}\">${esc(c === \"Sem cliente\" ? \"Título e cliente não identificados\" : c)}<\/a>${o.conf && c !== \"Sem cliente\" ? `<div class=\"help\" style=\"color:var(--state-needs_review)\">${o.conf} com a cliente a confirmar<\/div>` : \"\"}<\/td><td class=\"num\" data-l=\"Processos\">${o.n}<\/td><td class=\"num money\" data-l=\"Provisão\"><a class=\"link\" href=\"processos.html?cliente=${encodeURIComponent(c)}&valor=prov\" aria-label=\"Ver as provisões de ${esc(c)}\">${money(o.prov)}<\/a><\/td><td class=\"num money\" data-l=\"Condenação\"><a class=\"link\" href=\"processos.html?cliente=${encodeURIComponent(c)}&valor=cond\" aria-label=\"Ver as condenações de ${esc(c)}\">${money(o.cond)}<\/a><\/td><\/tr>`).join(\"\") + `<\/tbody>`;\n// funil compacto\nconst order = [\"needs_documents\", \"processing\", \"needs_review\", \"provision\", \"calculated\", \"approved\"];\nconst cnt = (s) => D.procs.filter((p) => p.estado === s).length;\n$(\"#funnel\").innerHTML = order.filter(cnt).map((s) => `<span style=\"flex:${cnt(s)};background:${D.STATES[s].c}\" title=\"${D.STATES[s].label}: ${cnt(s)}\"><\/span>`).join(\"\");\n$(\"#legend\").innerHTML = order.map((s) => `<a href=\"processos.html?estado=${s}\"><i style=\"background:${D.STATES[s].c}\"><\/i>${D.STATES[s].label} <b>${cnt(s)}<\/b><\/a>`).join(\"\") + `<a href=\"#\"><i style=\"background:var(--state-guide_requested)\"><\/i>Guia pedida <b>0<\/b><\/a><a href=\"#\"><i style=\"background:var(--state-paid)\"><\/i>Pago <b>0<\/b><\/a>`;\n$(\"#role\").onchange = render; render();\n"}, "processos.html": {"title": "Processos · Contencioso", "tpl": "\n  <div class=\"row\" style=\"justify-content:space-between;flex-wrap:wrap;gap:12px\">\n    <h1>Processos<\/h1>\n    <div class=\"row\"><button class=\"btn\" id=\"csv\"><i data-lucide=\"download\"><\/i>Exportar CSV<\/button><a class=\"btn primary\" href=\"uploads.html\"><i data-lucide=\"upload\"><\/i>Enviar documentos<\/a><\/div>\n  <\/div>\n  <div class=\"row\" style=\"margin-top:20px;flex-wrap:wrap;gap:12px\">\n    <label class=\"sr-only\" for=\"q\">Buscar processos<\/label>\n    <div style=\"position:relative;flex:1;min-width:260px;max-width:440px\"><i data-lucide=\"search\" style=\"position:absolute;left:10px;top:10px;color:var(--fg-subtle)\"><\/i>\n      <input class=\"input\" id=\"q\" type=\"search\" placeholder=\"Número (pode ser só um pedaço), parte ou cliente\" style=\"width:100%;padding-left:34px\"><\/div><span data-c=\"lista-busca\"><\/span>\n    <label class=\"field\" style=\"flex-direction:row;align-items:center;gap:8px\">Cliente\n      <select class=\"select\" id=\"cliente\"><option value=\"\">Todas<\/option><\/select><\/label><span data-c=\"lista-cliente\" data-l=\"Novo\"><\/span>\n  <\/div>\n  <div class=\"stack\" style=\"gap:10px;margin-top:14px\">\n    <div class=\"row\" style=\"flex-wrap:wrap;gap:8px\"><span class=\"help\" style=\"width:52px\">Situação<\/span><span data-c=\"estados\"><\/span><div id=\"fEstado\" class=\"row\" style=\"flex-wrap:wrap;gap:6px\"><\/div><\/div>\n    <div class=\"row\" style=\"flex-wrap:wrap;gap:8px\"><span class=\"help\" style=\"width:52px\">Valor<\/span><span data-c=\"lista-valor\" data-l=\"Novo\"><\/span><div id=\"fValor\" class=\"row\" style=\"flex-wrap:wrap;gap:6px\"><\/div><\/div>\n    <div class=\"row\" style=\"flex-wrap:wrap;gap:8px\"><span class=\"help\" style=\"width:52px\">Fase<\/span><div id=\"fFase\" class=\"row\" style=\"flex-wrap:wrap;gap:6px\"><\/div><\/div>\n  <\/div>\n  <p class=\"help\" id=\"hint\" style=\"margin:14px 0 8px\"><\/p>\n  <div class=\"table-wrap\"><table class=\"responsive\" id=\"tbl\"><\/table><\/div>\n  <p class=\"help\" id=\"count\" style=\"margin-top:10px\"><\/p>\n", "js": "\nconst { $, esc, money, badge, person, valueTag, clientTag, icons, shell, toast, D } = UI;\nshell(\"Processos\");\nconst P = new URLSearchParams(window.QS);\nconst st = { q: P.get(\"q\") || \"\", cliente: P.get(\"cliente\") || \"\", estado: P.get(\"estado\") || \"\", valor: P.get(\"valor\") || \"\", fase: \"\", sort: \"data\", dir: -1 };\nconst norm = (s) => (s || \"\").normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").toLowerCase().replace(/[^a-z0-9]/g, \"\");\n$(\"#q\").value = st.q;\n$(\"#cliente\").innerHTML += D.CLIENT_NAMES.map((c) => `<option ${c === st.cliente ? \"selected\" : \"\"}>${c}<\/option>`).join(\"\");\nconst base = () => D.procs.filter((p) => {\n  const q = norm(st.q);\n  // a busca considera o nome normalizado da cliente: \"Royal Air Maroc\" acha também \"Royalair Maroc\" e \"ROYAL AIR MAROC\"\n  if (q && !(norm(p.numero).includes(q) || norm(p.titulo).includes(q) || norm(p.sugestao).includes(q))) return false;\n  if (st.cliente && p.sugestao !== st.cliente) return false;\n  return true;\n});\nfunction chips(el, key, opts) {\n  const b = base();\n  $(el).innerHTML = [[\"\", \"Todos\", b.length], ...opts.map(([v, l, f]) => [v, l, b.filter(f).length])].map(([v, l, n]) =>\n    `<button class=\"chip ${st[key] === v ? \"on\" : \"\"}\" data-v=\"${v}\" aria-pressed=\"${st[key] === v}\" ${n === 0 && st[key] !== v ? \"disabled\" : \"\"}>${l} <span class=\"n\">${n}<\/span><\/button>`).join(\"\");\n  $(el).onclick = (e) => { const c = e.target.closest(\".chip\"); if (!c) return; st[key] = c.dataset.v; render(); };\n}\nconst COLS = [[\"numero\", \"Número\"], [\"partes\", \"Partes e cliente\"], [\"estado\", \"Situação\"], [\"resp\", \"Com quem\"], [\"valor\", \"Valor\"], [\"data\", \"Última mudança\"]];\nfunction render() {\n  chips(\"#fEstado\", \"estado\", Object.entries(D.STATES).filter(([k]) => D.procs.some((p) => p.estado === k)).map(([k, s]) => [k, s.label, (p) => p.estado === k]));\n  chips(\"#fValor\", \"valor\", [[\"prov\", \"Provisão (antes da sentença)\", (p) => p.tipo === \"prov\"], [\"cond\", \"Condenação\", (p) => p.tipo === \"cond\"], [\"none\", \"Sem valor ainda\", (p) => p.tipo === \"none\"]]);\n  chips(\"#fFase\", \"fase\", [\"Inicial\", \"Sentença\", \"Execução\"].map((f) => [f, f, (p) => p.fase === f]));\n  let rows = base().filter((p) => (!st.estado || p.estado === st.estado) && (!st.valor || p.tipo === st.valor) && (!st.fase || p.fase === st.fase));\n  const key = { numero: (p) => p.numero, partes: (p) => p.autor, estado: (p) => p.estado, resp: (p) => D.TEAM[p.resp].nome, valor: (p) => p.valor ?? -1, data: (p) => p.sort }[st.sort];\n  rows.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * st.dir);\n  const hidden = st.q && D.procs.filter((p) => norm(p.titulo).includes(norm(st.q))).length < rows.length;\n  $(\"#hint\").innerHTML = hidden ? `<i data-lucide=\"info\"><\/i> A busca por \"${esc(st.q)}\" também trouxe processos em que a cliente aparece com outra grafia nos autos.` : \"\";\n  $(\"#tbl\").innerHTML = `<thead><tr>${COLS.map(([k, l]) => `<th ${k === \"valor\" ? 'class=\"num\"' : \"\"} aria-sort=\"${st.sort === k ? (st.dir > 0 ? \"ascending\" : \"descending\") : \"none\"}\"><button class=\"btn ghost\" style=\"height:auto;padding:0;font-size:12px;color:inherit\" data-k=\"${k}\">${l} <i data-lucide=\"${st.sort === k ? (st.dir > 0 ? \"arrow-up\" : \"arrow-down\") : \"arrow-up-down\"}\"><\/i><\/button><\/th>`).join(\"\")}<\/tr><\/thead><tbody>` +\n    rows.map((p) => `<tr>\n      <td data-l=\"Número\"><span class=\"mono\" style=\"font-size:12px\"><a href=\"processo.html?id=${p.id}\">${p.numero}<\/a><\/span><div class=\"help\">${p.tribunal} · ${p.fase}<\/div><\/td>\n      <td data-l=\"Partes\"><div>${esc(p.autor)}<\/div><div style=\"margin-top:4px\">${clientTag(p)}<\/div><\/td>\n      <td data-l=\"Situação\">${badge(p.estado)}<div class=\"help\" style=\"margin-top:4px;max-width:260px\">${esc(p.motivo)}<\/div><\/td>\n      <td data-l=\"Com quem\"><span class=\"row\" style=\"gap:6px\">${person(p.resp)}<span>${D.TEAM[p.resp].nome.split(\" \")[0]}<\/span><\/span><\/td>\n      <td class=\"num\" data-l=\"Valor\">${p.valor != null ? `<div class=\"money\">${money(p.valor)}<\/div>` : \"\"}<div style=\"margin-top:2px\">${valueTag(p)}<\/div><\/td>\n      <td data-l=\"Última mudança\" style=\"white-space:nowrap\">${p.data.replace(\" \", \", \")}<\/td><\/tr>`).join(\"\") + `<\/tbody>`;\n  $(\"#hint\").innerHTML += UI.chg(\"lista-situacao\", \"Mudou: colunas e ordem\");\n  $(\"#count\").textContent = `${rows.length} de ${D.procs.length} processos`;\n  history.replaceState(null, \"\", \"#/processos.html?\" + new URLSearchParams(Object.fromEntries(Object.entries({ q: st.q, cliente: st.cliente, estado: st.estado, valor: st.valor }).filter(([, v]) => v))).toString());\n  icons();\n}\n$(\"#tbl\").addEventListener(\"click\", (e) => { const b = e.target.closest(\"[data-k]\"); if (!b) return; st.dir = st.sort === b.dataset.k ? -st.dir : -1; st.sort = b.dataset.k; render(); });\n$(\"#q\").oninput = (e) => { st.q = e.target.value; render(); };\n$(\"#cliente\").onchange = (e) => { st.cliente = e.target.value; render(); };\n$(\"#csv\").onclick = () => toast(\"Protótipo: o CSV sairia com as colunas da tela, inclusive cliente, situação, responsável e tipo de valor.\");\nrender();\n"}, "processo.html": {"title": "Processo · Contencioso", "tpl": "<div id=\"root\"><\/div>", "js": "\nconst { $, $$, esc, money, badge, person, valueTag, clientTag, icons, shell, openSide, closeSide, confirmDialog, toast, D } = UI;\nshell(\"Processos\");\nconst P = new URLSearchParams(window.QS);\nconst p = UI.proc(P.get(\"id\") || 24) || UI.proc(24);\nconst aba = P.get(\"aba\") || \"visao\";\ndocument.title = p.numero + \" · Contencioso\";\nconst C = window.CASES[p.id] || generic(p);\nconst state = { cliente: p.cliente, zero: null };\n\nfunction generic(p) {\n  const map = { needs_review: 4, needs_documents: 0, calculated: 5, provision: 4 };\n  return { current: map[p.estado] ?? 2, provision: p.estado === \"provision\", steps: [\"Autos completos\", \"Concluída\", \"Sem dúvidas\", p.tipo === \"prov\" ? \"Provisão\" : \"Versão 1\", \"\", \"\", \"\", \"\"],\n    now: { mode: p.estado === \"provision\" ? \"wait\" : \"person\", lead: p.estado === \"provision\" ? \"Provisão feita · aguardando a sentença\" : D.STATES[p.estado].label, why: p.motivo, cta: [p.estado === \"needs_documents\" ? \"Enviar documento\" : p.estado === \"provision\" ? \"Ver a estimativa\" : \"Resolver\", p.estado === \"needs_documents\" ? \"documentos\" : \"calculo\", \"\"] },\n    leitura: { fase: p.fase, processual: \"—\", titulo: \"—\", desfecho: \"—\", pend: [] }, partes: [[p.autor, \"Autor(a)\", null], ...p.reus.split(/ e (?=[A-Z])/).map((r) => [r, r.match(/maroc|arajet|taag|ethiopian|finnair|westjet/i) && p.cliente ? \"Ré · cliente\" : \"Ré\", null])],\n    resumo: \"Conteúdo ilustrativo: este processo usa o modelo genérico do protótipo. Veja os processos 24, 29, 4 e 14 para os casos completos.\", timeline: [], calc: null, folhas: {}, historico: [] };\n}\n\n/* ---------- jornada: mesmos 8 passos sempre, na ordem do guia; cada passo leva ao lugar dele ---------- */\nconst STEPS = [[\"Documentos\", \"documentos\", \"\"], [\"Leitura dos autos\", \"timeline\", \"\"], [\"Revisão da leitura\", \"timeline\", \"&visao=duvidas\"], [\"Memória de cálculo\", \"calculo\", \"\"], [\"Conferência\", \"calculo\", \"#aprovar\"], [\"Aprovação\", \"calculo\", \"#aprovar\"], [\"Guia\", \"calculo\", \"#guia\"], [\"Pago\", \"historico\", \"\"]];\nfunction journey() {\n  return `<div class=\"steps\" role=\"list\" aria-label=\"Jornada do processo. Use as setas para ver os outros passos.\">${STEPS.map(([n, t, h], i) => {\n    const cls = i < C.current ? \"done\" : i === C.current ? \"current\" : C.provision && i >= 5 ? \"locked\" : \"\";\n    const sub = C.steps[i] || (C.provision && i === 5 ? \"Só com sentença\" : i > C.current ? \"próxima\" : \"\");\n    return `<a role=\"listitem\" class=\"step ${cls}\" tabindex=\"${i === C.current ? 0 : -1}\" href=\"?id=${p.id}&aba=${t}${h}\" ${i === C.current ? 'aria-current=\"step\"' : \"\"}>\n      <span class=\"dot\">${i < C.current ? '<i data-lucide=\"check\"><\/i>' : C.provision && i >= 5 ? '<i data-lucide=\"lock\"><\/i>' : i + 1}<\/span>\n      <span class=\"lbl\">${n}<\/span><span class=\"sub\">${sub}<\/span><\/a>`;\n  }).join(\"\")}<\/div>`;\n}\nfunction nowBlock() {\n  let n = C.now; const who = D.TEAM[p.resp];\n  if (C.calc?.checklist === \"cliente_zero\" && state.cliente && state.zero) n = { mode: \"person\", lead: state.zero === \"zero\" ? \"Aprove e encerre sem valor\" : \"Aprove a memória\", why: `Cliente indicada (${state.cliente}) e motivo do zero registrado. Falta só a aprovação de quem tem permissão.`, cta: [state.zero === \"zero\" ? \"Aprovar e encerrar\" : \"Aprovar\", \"calculo\", \"#aprovar\"] };\n  else if (C.calc?.checklist === \"cliente_zero\" && (state.cliente || state.zero)) n = { ...n, lead: \"Falta 1 pendência para aprovar\", cta: [\"Resolver a pendência\", \"calculo\", \"#aprovar\"] };\n  const mode = { person: ['user-round', 'Precisa de uma pessoa', 'person'], system: ['loader', 'O sistema está trabalhando', 'system'], wait: ['hourglass', 'Aguardando os autos', 'wait'] }[n.mode];\n  return `<div class=\"now\"><div>\n      <span class=\"mode ${mode[2]}\"><i data-lucide=\"${mode[0]}\"><\/i>${mode[1]}<\/span>${UI.chg(\"proc-agora\", \"Mudou: um próximo passo só\")}\n      <div class=\"lead\" style=\"margin-top:8px\">${esc(n.lead)}<\/div>\n      <p class=\"why\">${esc(n.why).replace(/memória(?! de)/, UI.term(\"memória\", \"memoria\")).replace(/estimativa/, UI.term(\"estimativa\", \"provisao\"))}<\/p>\n      <div class=\"row\" style=\"flex-wrap:wrap;gap:8px\"><a class=\"btn primary lg\" href=\"?id=${p.id}&aba=${n.cta[1]}${n.cta[2]}\" id=\"ctaMain\"><i data-lucide=\"arrow-right\"><\/i>${esc(n.cta[0])}<\/a><\/div><\/div>\n    <div class=\"who\"><span>Com quem está ${UI.chg(\"proc-comquem\")}<\/span><span class=\"row\" style=\"gap:8px\">${person(p.resp)}<b>${who.nome}<\/b><\/span><span>${who.papel} · desde ${p.data.slice(0, 5)}<\/span>\n      ${p.resp !== \"sistema\" ? `<button class=\"link\" style=\"font-size:12px\" onclick=\"UI.toast('Protótipo: escolher outra pessoa da equipe para este processo.')\">Passar para outra pessoa<\/button>` : \"\"}<\/div><\/div>`;\n}\nfunction header() {\n  const tot = C.calc?.memoria;\n  return `<a class=\"link\" href=\"processos.html\" style=\"font-size:13px\"><i data-lucide=\"chevron-left\"><\/i>Processos<\/a>\n  <div class=\"head\" style=\"margin-top:10px\"><div>\n    <div class=\"row\" style=\"flex-wrap:wrap;gap:10px\"><h1 class=\"mono\">${p.numero}<\/h1>\n      <button class=\"icon-btn\" aria-label=\"Copiar número do processo\" onclick=\"navigator.clipboard?.writeText('${p.numero}');UI.toast('Número copiado')\"><i data-lucide=\"copy\"><\/i><\/button>\n      ${badge(p.estado)}${UI.chg(\"estados\")}<\/div>\n    <div class=\"row\" style=\"flex-wrap:wrap;gap:8px;margin-top:6px\"><span>${esc(p.titulo)}<\/span><span class=\"subtle\">· ${p.tribunal}<\/span><button class=\"icon-btn\" aria-label=\"Editar título\"><i data-lucide=\"pencil\"><\/i><\/button><\/div>\n    <div class=\"row\" style=\"gap:8px;margin-top:8px\">${clientTag({ cliente: state.cliente })}${valueTag(p)}${UI.chg(\"proc-cliente-topo\")}<\/div><\/div>\n    <div class=\"row\" style=\"align-items:flex-start;gap:20px\">\n      ${tot ? `<dl class=\"totals\"><div><dt>${C.provision ? UI.term(\"Provisão estimada\", \"provisao\") : UI.term(\"Total devido\", \"total\")}<\/dt><dd class=\"money big\">${money(tot.total)}<\/dd><\/div><div><dt>${UI.term(\"Parte da cliente\", \"parte\")}<\/dt><dd class=\"money big\">${money(tot.parte)}<\/dd><\/div><\/dl>` : \"\"}\n      ${UI.chg(\"proc-mais-acoes\")}<div style=\"position:relative\"><button class=\"btn\" id=\"more\" aria-haspopup=\"menu\" aria-expanded=\"false\"><i data-lucide=\"ellipsis\"><\/i>Mais ações<\/button>\n        <div class=\"menu\" id=\"moreMenu\" role=\"menu\" hidden>\n          <button role=\"menuitem\" data-act=\"reler\"><i data-lucide=\"refresh-cw\"><\/i><span>Reler os autos<small>Lê todos os PDFs de novo. Tem custo e leva alguns minutos.<\/small><\/span><\/button>\n          <button role=\"menuitem\" data-act=\"arquivar\"><i data-lucide=\"archive\"><\/i><span>Arquivar processo<small>Sai das filas e do Painel. Dá para desfazer.<\/small><\/span><\/button>\n        <\/div><\/div><\/div><\/div>\n  <section class=\"card\" style=\"margin-top:20px\" aria-label=\"Jornada do processo\"><div class=\"journey\"><div style=\"margin:-6px 0 12px\">${UI.chg(\"proc-jornada\", \"Mudou: jornada\")}<\/div>${journey()}<\/div>${nowBlock()}<\/section>`;\n}\n\n/* ---------- abas ---------- */\nconst pendCount = C.calc?.checklist === \"cliente_zero\" ? 2 : C.calc?.checklist === \"provisao\" ? 1 : 0;\nconst TABS = [[\"visao\", \"Visão geral\"], [\"documentos\", \"Documentos\", 1, p.estado === \"needs_documents\"], [\"timeline\", \"Timeline\"], [\"calculo\", \"Cálculo\", pendCount || null, pendCount > 0], [\"historico\", \"Histórico\"]];\nfunction tabs() { return `<nav class=\"tabs\" aria-label=\"Seções do processo\">${TABS.map(([k, l, n, alert]) => `<a href=\"?id=${p.id}&aba=${k}\" aria-selected=\"${aba === k}\" ${aba === k ? 'aria-current=\"page\"' : \"\"}>${l}${n ? `<span class=\"cnt ${alert ? \"alert\" : \"\"}\">${n}<\/span>` : \"\"}<\/a>`).join(\"\")}<span style=\"align-self:center\">${UI.chg(\"proc-contadores\")}<\/span><\/nav>`; }\nconst fl = (n, t = \"fl. \" + n) => `<button class=\"fl\" data-fl=\"${n}\"><i data-lucide=\"file-text\"><\/i>${t}<\/button>`;\n\nfunction visao() {\n  const L = C.leitura;\n  const reus = C.partes.filter(([, r]) => r.startsWith(\"Ré\"));\n  return `<div class=\"grid2\" style=\"margin-top:20px\">\n    <section class=\"card\"><div class=\"card-h\"><h2>Leitura dos autos<\/h2><\/div><div class=\"card-b\">\n      <dl class=\"kv\"><div><dt>Fase<\/dt><dd>${L.fase}<\/dd><\/div><div><dt>Fase processual<\/dt><dd>${L.processual}<\/dd><\/div><div><dt>Título vigente<\/dt><dd>${L.titulo}<\/dd><\/div><div><dt>Desfecho<\/dt><dd>${L.desfecho}<\/dd><\/div><\/dl>\n      ${L.pend.length ? `<div class=\"sep\"><\/div><h3>Pendências<\/h3><ul style=\"margin:6px 0 0;padding-left:18px\">${L.pend.map((x) => `<li>${esc(x)} <a class=\"link\" href=\"?id=${p.id}&aba=${C.calc ? \"calculo#aprovar\" : \"documentos#faltam\"}\" style=\"font-size:12px\">Resolver<\/a><\/li>`).join(\"\")}<\/ul>` : \"\"}\n    <\/div><\/section>\n    <section class=\"card\" id=\"partes\"><div class=\"card-h\"><div><h2>Partes ${UI.chg(\"visao-partes\")}<\/h2><p>A cliente define quem paga a conta. Ela pode ser indicada aqui.<\/p><\/div><\/div><div class=\"card-b\">\n      ${C.partes.map(([n, r, adv]) => { const isRe = r.startsWith(\"Ré\"); const isCli = (state.cliente && n.toLowerCase().includes(state.cliente.split(\" \").pop().toLowerCase())) || r.includes(\"cliente\");\n        return `<div class=\"row\" style=\"padding:10px 0;border-top:1px solid var(--border);align-items:flex-start\"><div style=\"flex:1\"><b>${esc(n)}<\/b> <span class=\"tag\">${isRe ? \"Ré\" : r}<\/span> ${isRe && isCli ? '<span class=\"tag client\"><i data-lucide=\"briefcase\"><\/i>Cliente<\/span>' : \"\"}\n          <div class=\"help\">${adv ? \"Advogados: \" + esc(adv) : isRe ? \"Advogados não identificados nos autos\" : \"\"}<\/div><\/div>\n          ${isRe && !state.cliente ? `<button class=\"btn\" data-mark=\"${esc(n)}\"><i data-lucide=\"briefcase\"><\/i>Marcar como cliente<\/button>` : \"\"}<\/div>`; }).join(\"\")}\n      <div class=\"sep\" style=\"margin:8px 0 12px\"><\/div><div class=\"row\"><span class=\"help\" style=\"flex:1\">Responsabilidade da cliente: <b style=\"color:var(--fg)\">direta, integral<\/b> · padrão do perfil, porque os autos não dizem.<\/span><button class=\"btn ghost\">Alterar<\/button><\/div>\n    <\/div><\/section><\/div>\n    <section class=\"card\" style=\"margin-top:16px\"><div class=\"card-h\"><h2>O processo<\/h2><\/div><div class=\"card-b\"><p style=\"margin:0\">${esc(C.resumo)}<\/p><\/div><\/section>\n    ${C.timeline.length ? `<section class=\"card\" style=\"margin-top:16px\"><div class=\"card-h\"><h2>Decisões, prazos e providências ${UI.chg(\"folha-lado\", \"Mudou: folha ao lado\")}<\/h2><\/div><div class=\"card-b\">${C.timeline.slice().reverse().filter((t) => t[5]).map((t) => `<div class=\"row\" style=\"align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)\"><span class=\"mono subtle\" style=\"width:92px;font-size:12px\">${t[0]}<\/span><div style=\"flex:1\"><b>${t[2]}<\/b><div class=\"help\">${t[3]}<\/div><\/div>${fl(t[4])}<\/div>`).join(\"\")}<\/div><\/section>` : \"\"}`;\n}\n\nfunction documentos() {\n  const falta = p.estado === \"needs_documents\";\n  return `${falta ? `<section class=\"card\" id=\"faltam\" style=\"margin-top:20px\"><div class=\"card-h\"><div><h2>O que falta para a leitura continuar ${UI.chg(\"docs-falta\", \"Novo\")}<\/h2><p>O sistema compara o que a sentença pede com o que já está nos autos.<\/p><\/div><\/div><div class=\"card-b\">\n      <div class=\"check\"><span class=\"ic bad\"><i data-lucide=\"x\"><\/i><\/span><div><h3>Planilha da liquidação homologada<\/h3><p>A sentença manda apurar o valor em liquidação ${fl(211)}. Ela costuma estar nos autos depois da sentença, com o nome \"cálculos\" ou \"planilha de liquidação\".<\/p><\/div><\/div>\n      <div class=\"check\"><span class=\"ic ok\"><i data-lucide=\"check\"><\/i><\/span><div><h3>Petição inicial<\/h3><p>fls. 1–39<\/p><\/div><\/div>\n      <div class=\"check\"><span class=\"ic ok\"><i data-lucide=\"check\"><\/i><\/span><div><h3>Sentença e embargos<\/h3><p>fls. 211–245<\/p><\/div><\/div><\/div><\/section>` : \"\"}\n    <section class=\"card\" style=\"margin-top:16px\"><div class=\"card-b\"><div class=\"drop\"><i data-lucide=\"upload-cloud\" style=\"width:28px;height:28px;color:var(--brand-400)\"><\/i><h3 style=\"margin-top:8px\">Arraste os PDFs aqui<\/h3><p class=\"muted\" style=\"margin:4px 0 12px\">Eles entram direto neste processo. A leitura começa sozinha.<\/p>\n      <div class=\"row\" style=\"justify-content:center;flex-wrap:wrap\"><label class=\"field\" style=\"flex-direction:row;align-items:center\">Tipo<select class=\"select\"><option>${falta ? \"Peça avulsa: planilha de liquidação\" : \"Processo completo\"}<\/option><option>Peça avulsa<\/option><option>Planilha de contingência da cliente<\/option><\/select><\/label><button class=\"btn primary\" onclick=\"UI.toast('Protótipo: abriria a escolha de arquivos. Só PDF.')\">Escolher arquivos<\/button><\/div><\/div><\/div><\/section>\n    <section class=\"card\" style=\"margin-top:16px\"><div class=\"card-h\"><h2>Documentos do processo ${UI.chg(\"docs-linguagem\")}<\/h2><\/div><div class=\"card-b\">\n      <div class=\"row\" style=\"padding:8px 0\"><i data-lucide=\"file-text\"><\/i><div style=\"flex:1\"><b>Autos completos · parte 1<\/b><div class=\"help\">98 páginas · 13,3 MB · enviado por Bruna Martins em 29/10 · lido<\/div><\/div><button class=\"btn ghost\"><i data-lucide=\"eye\"><\/i>Ver<\/button><button class=\"btn ghost\"><i data-lucide=\"download\"><\/i>Baixar<\/button><button class=\"btn ghost danger\" onclick=\"UI.confirmDialog({title:'Excluir este documento?',body:'<p>O documento sai do processo e a leitura dos autos é refeita sem ele. A memória atual vira uma versão antiga.<\/p>',ok:'Excluir documento',danger:true,onOk:()=>UI.toast(\\'Protótipo: documento excluído.\\')})\"><i data-lucide=\"trash-2\"><\/i>Excluir<\/button><\/div><\/div><\/section>`;\n}\n\nlet tlView = P.get(\"visao\") || \"resumida\";\nfunction timeline() {\n  const views = [[\"resumida\", \"Resumida\"], [\"completa\", \"Completa\"], [\"duvidas\", \"Dúvidas da leitura\"], [\"mudou\", \"O que mudou\"]];\n  let body;\n  if (tlView === \"duvidas\") body = `<div class=\"callout\" style=\"--c:var(--positive)\"><i data-lucide=\"circle-check\"><\/i><div><b>Nenhuma dúvida da leitura<\/b><p>O sistema teve certeza de todos os atos que leu. Os pontos da conta ficam na aba <a class=\"link\" href=\"?id=${p.id}&aba=calculo#aprovar\">Cálculo<\/a>.<\/p><\/div><\/div>`;\n  else if (tlView === \"mudou\") body = `<p class=\"muted\">Nada mudou desde a última leitura (09/11/2026 15:35).<\/p>`;\n  else body = (C.timeline.length ? C.timeline : [[\"—\", \"—\", \"Este processo usa o modelo genérico do protótipo.\", \"\", 1, null]]).map((t) => `<div class=\"row\" style=\"align-items:flex-start;padding:12px 0;border-top:1px solid var(--border)\"><span class=\"mono subtle\" style=\"width:92px;font-size:12px\">${t[0]}<\/span><div style=\"flex:1\"><span class=\"tag\">${t[1]}<\/span> <b>${t[2]}<\/b>${tlView === \"completa\" || t[3] ? `<div class=\"help\" style=\"margin-top:2px\">${t[3]}<\/div>` : \"\"}<\/div>${fl(t[4])}<\/div>`).join(\"\");\n  return `<div class=\"row\" style=\"margin-top:16px;flex-wrap:wrap\"><div class=\"subtabs\" role=\"tablist\">${views.map(([k, l]) => `<a class=\"chip ${tlView === k ? \"on\" : \"\"}\" href=\"?id=${p.id}&aba=timeline&visao=${k}\">${l}<\/a>`).join(\"\")}<\/div>${UI.chg(\"tl-duvidas\", \"Mudou: Dúvidas da leitura\")}${UI.chg(\"tl-folha\", \"Mudou: folha em cada ato\")}<span style=\"flex:1\"><\/span><span class=\"help\">Lida em 09/11/2026, 15:35 · cada ato mostra a folha de onde veio<\/span><\/div>\n    <section class=\"card\"><div class=\"card-b\" style=\"padding-top:4px\">${body}<\/div><\/section>`;\n}\n\n/* ---------- Cálculo: começa pelo que falta para aprovar ---------- */\nfunction checklist() {\n  const k = C.calc.checklist;\n  if (k === \"provisao\") return `<section class=\"card\" id=\"aprovar\" style=\"margin-top:20px\"><div class=\"card-h\"><div><h2>Para conferir nesta estimativa ${UI.chg(\"calc-para-aprovar\", \"Mudou: começa pelo que falta\")}<\/h2><p>A provisão não é aprovada. Quando a sentença chegar, a memória é refeita e vem para aprovação.<\/p><\/div><\/div><div class=\"card-b\">\n    <div class=\"check\"><span class=\"ic bad\"><i data-lucide=\"calendar-x\"><\/i><\/span><div style=\"flex:1\"><h3>Data da citação não encontrada<\/h3><p>Os juros estão contando do ajuizamento (26/08/2026) ${fl(2)}. Se você souber a data da citação, informe aqui e diga de onde ela veio.<\/p>\n      <div class=\"row\" style=\"flex-wrap:wrap;align-items:flex-end\"><label class=\"field\">Data da citação<input class=\"input\" type=\"date\" id=\"cit\"><\/label><label class=\"field\">De onde veio<input class=\"input\" placeholder=\"Ex.: AR juntado, fl. 31\" id=\"citFonte\"><\/label><button class=\"btn primary\" id=\"citOk\">Usar esta data<\/button><\/div>\n      <p class=\"help\" style=\"margin-top:8px\">Gera uma nova versão da provisão. Nada é alterado antes de você confirmar.<\/p><\/div><\/div><\/div><\/section>`;\n  if (k === \"ok\") return `<section class=\"card\" id=\"aprovar\" style=\"margin-top:20px\"><div class=\"card-h\"><div><h2>Pronto para aprovar ${UI.chg(\"calc-para-aprovar\", \"Mudou: começa pelo que falta\")}<\/h2><p>Tudo o que a conta precisa está conferido.<\/p><\/div><\/div><div class=\"card-b\">\n    <div class=\"check\"><span class=\"ic ok\"><i data-lucide=\"check\"><\/i><\/span><div><h3>Cliente: Finnair<\/h3><p>Responsabilidade direta e integral.<\/p><\/div><\/div>\n    <div class=\"check\"><span class=\"ic ok\"><i data-lucide=\"check\"><\/i><\/span><div><h3>Valores informados por Rafael Moura<\/h3><p>Custas: R$ 0,00 (isenção), em 06/11.<\/p><\/div><\/div>\n    <div class=\"check\"><span class=\"ic ok\"><i data-lucide=\"check\"><\/i><\/span><div><h3>Data de referência: hoje (16/11/2026)<\/h3><p>O valor está atualizado até a data em que será pago.<\/p><\/div><\/div>\n    ${approveBar(true)}<\/div><\/section>`;\n  const reus = C.partes.filter(([, r]) => r.startsWith(\"Ré\"));\n  const cOk = !!state.cliente, zOk = !!state.zero;\n  return `<section class=\"card\" id=\"aprovar\" style=\"margin-top:20px\"><div class=\"card-h\"><div><h2>Para aprovar esta memória ${UI.chg(\"calc-para-aprovar\", \"Mudou: começa pelo que falta\")}<\/h2><p>${[!cOk, !zOk].filter(Boolean).length ? `Faltam ${[!cOk, !zOk].filter(Boolean).length} itens. Cada um mostra o motivo e onde resolver.` : \"Tudo resolvido.\"}<\/p><\/div><\/div><div class=\"card-b\">\n    <div class=\"check\"><span class=\"ic ${cOk ? \"ok\" : \"bad\"}\"><i data-lucide=\"${cOk ? \"check\" : \"briefcase\"}\"><\/i><\/span><div style=\"flex:1\">\n      <h3>${cOk ? \"Cliente: \" + esc(state.cliente) : \"Indique qual ré é a cliente\"} ${UI.chg(\"calc-cliente\", \"Novo\")}<\/h3>\n      ${cOk ? `<p>Indicada por você agora. <button class=\"link\" data-undo-cliente>Desfazer<\/button><\/p>` : `<p>Os autos não dizem qual das rés a equipe defende. A conta só considera a parte da cliente.<\/p>\n        ${reus.map(([n], i) => `<label class=\"choice\"><input type=\"radio\" name=\"cli\" value=\"${esc(n)}\" ${i === reus.length - 1 ? \"checked\" : \"\"}><span style=\"flex:1\">${esc(n)}<\/span>${/maroc/i.test(n) ? '<span class=\"help\">Sugestão: é cliente em 8 outros processos<\/span>' : \"\"}<\/label>`).join(\"\")}\n        <label class=\"choice\"><input type=\"radio\" name=\"cli\" value=\"\"><span>Nenhuma das rés é cliente: tirar este processo da carteira<\/span><\/label>\n        <button class=\"btn primary\" style=\"margin-top:10px\" id=\"cliOk\">Confirmar cliente<\/button>`}<\/div><\/div>\n    <div class=\"check\"><span class=\"ic ${zOk ? \"ok\" : \"bad\"}\"><i data-lucide=\"${zOk ? \"check\" : \"circle-dollar-sign\"}\"><\/i><\/span><div style=\"flex:1\">\n      <h3>${zOk ? (state.zero === \"zero\" ? \"Decisão: a cliente não deve nada\" : \"Valor informado\") : \"A conta deu zero: confirme o motivo\"} ${UI.chg(\"calc-zero\")}<\/h3>\n      ${zOk ? `<p>${state.zero === \"zero\" ? \"O processo será encerrado sem valor depois da aprovação.\" : \"\"} <button class=\"link\" data-undo-zero>Desfazer<\/button><\/p>` : `<p>A sentença homologou um acordo entre o autor e a TAP ${fl(87)}, e o alvará de R$ 4.112,71 foi pago em 21/08 ${fl(102)}. A Royal Air Maroc não aparece no acordo ${fl(61)}.<\/p>\n        <label class=\"choice\"><input type=\"radio\" name=\"zero\" value=\"zero\" checked><span>A cliente não deve nada: encerrar sem valor<\/span><\/label>\n        <label class=\"choice\"><input type=\"radio\" name=\"zero\" value=\"valor\"><span>A cliente deve um valor que não está nos autos<\/span><\/label>\n        <div class=\"row\" id=\"zeroValor\" hidden style=\"margin-top:8px;flex-wrap:wrap;align-items:flex-end\"><label class=\"field\">Valor<input class=\"input\" placeholder=\"R$ 0,00\"><\/label><label class=\"field\">De onde veio<input class=\"input\" placeholder=\"Ex.: planilha da cliente, fl. 110\"><\/label><\/div>\n        <button class=\"btn primary\" style=\"margin-top:10px\" id=\"zeroOk\">Registrar decisão<\/button>`}<\/div><\/div>\n    <div class=\"check\"><span class=\"ic info\"><i data-lucide=\"calendar\"><\/i><\/span><div style=\"flex:1\"><h3>${UI.term(\"Data de referência\", \"dataref\")}: 10/11/2026<\/h3><p>Essa data já passou: o valor está atualizado só até ela. <button class=\"link\" onclick=\"UI.toast('Protótipo: nova versão com data de referência 16/11/2026.')\">Atualizar para hoje<\/button><\/p><\/div><\/div>\n    ${approveBar(cOk && zOk)}<\/div><\/section>`;\n}\nfunction approveBar(ok) {\n  const zero = state.zero === \"zero\";\n  return `<div class=\"row\" style=\"justify-content:flex-end;gap:12px;padding-top:14px;border-top:1px solid var(--border);margin-top:4px;flex-wrap:wrap\">\n    ${UI.chg(\"calc-aprovar\")}<span class=\"help\">${ok ? \"Ao aprovar, a memória congela. Para mudar depois, é preciso remover a aprovação, com um motivo.\" : \"O botão libera quando os itens acima estiverem resolvidos.\"}<\/span>\n    <button class=\"btn primary lg\" id=\"approve\" ${ok ? \"\" : \"disabled\"}><i data-lucide=\"badge-check\"><\/i>${zero ? \"Aprovar e encerrar sem valor\" : `Aprovar versão ${C.calc.memoria.versao}`}<\/button><\/div>`;\n}\nfunction verbaHtml(v) {\n  const mm = (t, cols) => t ? `<details style=\"margin-top:8px\"><summary class=\"link\" style=\"cursor:pointer;font-size:12px\">Mês a mês<\/summary><table class=\"mm\"><thead><tr>${cols.map((c) => `<th>${c}<\/th>`).join(\"\")}<\/tr><\/thead><tbody>${t.map((r) => `<tr>${r.map((c) => `<td>${c}<\/td>`).join(\"\")}<\/tr>`).join(\"\")}<\/tbody><\/table><\/details>` : \"\";\n  return `<details class=\"verba\"><summary><i data-lucide=\"chevron-right\" class=\"chev\"><\/i><b>${v.nome}<\/b>\n    <span class=\"num hide-sm\"><span class=\"lbl-s\">Valor de partida<\/span>${money(v.partida)}<\/span><span class=\"num hide-sm\"><span class=\"lbl-s\">Corrigido<\/span>${money(v.corrigido)}<\/span><span class=\"num hide-sm\"><span class=\"lbl-s\">Juros<\/span>${money(v.juros)}<\/span><span class=\"num\"><span class=\"lbl-s\">Total<\/span><b class=\"money\">${money(v.total)}<\/b><\/span><\/summary>\n    <div class=\"in\"><h3 style=\"margin-top:14px\">De onde veio o valor<\/h3><div class=\"row\" style=\"margin-top:6px\"><span class=\"muted\">${v.origem[0]}<\/span>${fl(v.origem[1].split(\"-\")[0], \"fls. \" + v.origem[1])}<\/div><div class=\"quote\">${esc(v.origem[2])}<\/div>\n    ${v.correcao ? `<div class=\"grid2\" style=\"margin-top:12px\"><div><h3>Correção monetária<\/h3><p class=\"muted\" style=\"margin:4px 0\">${v.correcao[0]} · ${v.correcao[1]}<\/p><p class=\"help\" style=\"margin:0\">Começa no ${v.correcao[2]} ${fl(2)} · termina na data de referência<\/p>${mm(v.correcao[3], [\"Mês\", \"Dias\", \"Índice\", \"Correção\", \"Base corrigida\"])}<\/div>\n      <div><h3>Juros<\/h3><p class=\"muted\" style=\"margin:4px 0\">${v.juros[0]} · ${v.juros[1]}<\/p><p class=\"help\" style=\"margin:0\">Começa no ${v.juros[2]} ${fl(2)} · termina na data de referência<\/p>${mm(v.juros[3], [\"Mês\", \"Dias\", \"Taxa\", \"Juros\"])}<\/div><\/div>` : \"\"}<\/div><\/details>`;\n}\nfunction calculo() {\n  if (!C.calc) return `<section class=\"card\" style=\"margin-top:20px\"><div class=\"card-b\"><div class=\"callout\" style=\"--c:var(--state-needs_documents)\"><i data-lucide=\"file-warning\"><\/i><div><b>A conta ainda não pode ser montada<\/b><p>${esc(p.motivo)} Assim que o documento chegar, a leitura continua e a memória aparece aqui.<\/p><a class=\"btn\" style=\"margin-top:10px\" href=\"?id=${p.id}&aba=documentos#faltam\"><i data-lucide=\"upload\"><\/i>Ver o que falta<\/a><\/div><\/div><\/div><\/section>`;\n  const m = C.calc.memoria;\n  return `${C.provision ? `<div class=\"callout\" style=\"margin-top:20px;--c:var(--state-calculated)\"><i data-lucide=\"info\"><\/i><div><b>Provisão: estimativa sem sentença<\/b> ${UI.chg(\"calc-provisao\")}<p>Feita a partir dos pedidos da petição inicial. Serve para provisionar e não é o valor de uma condenação: não é aprovada e não gera guia.<\/p><\/div><\/div>` : \"\"}\n    ${checklist()}\n    <section class=\"card\" style=\"margin-top:16px\"><div class=\"card-h\" style=\"flex-wrap:wrap\"><h2>${UI.term(C.provision ? \"Memória de provisão\" : \"Memória de cálculo\", C.provision ? \"provisao\" : \"memoria\")} · Versão ${m.versao}<\/h2>${UI.chg(\"glossario\", \"Novo: termos explicados\")}<span class=\"badge plain\" style=\"--c:var(--state-calculated)\">${m.rotulo}<\/span><span style=\"flex:1\"><\/span>\n      <button class=\"btn\" id=\"calcChat\"><i data-lucide=\"message-square-diff\"><\/i>Chat do cálculo<\/button>${UI.chg(\"chat-calculo\")}<\/div>\n      <div class=\"card-b\"><dl class=\"kv\"><div><dt>${C.provision ? \"Estimativa total\" : \"Total devido\"}<\/dt><dd class=\"money big\">${money(m.total)}<\/dd><\/div><div><dt>${UI.term(\"Parte da cliente\", \"parte\")}<\/dt><dd class=\"money big\">${money(m.parte)}<\/dd><\/div><div><dt>${UI.term(\"Data de referência\", \"dataref\")}<\/dt><dd>${m.ref} <button class=\"link\" style=\"font-size:12px\" onclick=\"UI.toast('Protótipo: escolher nova data; gera uma versão nova.')\">Alterar<\/button><\/dd><\/div><div><dt>Responsabilidade<\/dt><dd>Direta<\/dd><\/div><\/dl>\n      <div class=\"row\" style=\"margin-top:16px;flex-wrap:wrap\"><button class=\"btn\"><i data-lucide=\"sheet\"><\/i>Baixar planilha<\/button><button class=\"btn\"><i data-lucide=\"file-down\"><\/i>Baixar PDF<\/button><span style=\"flex:1\"><\/span><button class=\"btn ghost\"><i data-lucide=\"history\"><\/i>Versões (${m.versao})<\/button><button class=\"btn ghost\"><i data-lucide=\"git-compare\"><\/i>Comparar versões<\/button><\/div><\/div><\/section>\n    <section style=\"margin-top:20px\"><div class=\"row\" style=\"margin-bottom:10px\"><h2>${UI.term(\"Verbas\", \"verba\")} ${UI.chg(\"calc-verbas\")}<\/h2><span class=\"help\">${C.calc.verbas.length} ${C.calc.verbas.length === 1 ? \"verba\" : \"verbas\"} · clique para ver a origem e a conta mês a mês<\/span><\/div>\n      ${C.calc.verbas.length ? C.calc.verbas.map(verbaHtml).join(\"\") : `<div class=\"card card-b muted\">Nenhuma verba com valor: a sentença não condena a cliente.<\/div>`}\n      <div class=\"card\" style=\"margin-top:12px;padding:14px 16px;box-shadow:none\"><div class=\"row\"><b style=\"flex:1\">${C.provision ? \"Estimativa total (não gera guia)\" : \"Total devido · base para a guia\"}<\/b><span class=\"money big\">${money(m.total)}<\/span><\/div><\/div><\/section>\n    <details class=\"card\" style=\"margin-top:16px\"><summary class=\"card-b\" style=\"cursor:pointer\"><b>Evolução por fase<\/b> <span class=\"help\">· quanto o valor mudou da inicial até o título vigente<\/span><\/summary><div class=\"card-b\" style=\"padding-top:0\"><div class=\"phase\">${C.calc.fases.map(([f, d, v, n]) => `<div class=\"card\"><span class=\"help\">${f} · ${d}<\/span><div class=\"money\" style=\"font-size:18px;margin-top:4px\">${money(v)}<\/div><div class=\"help\">${n}<\/div><\/div>`).join(\"\")}<\/div><\/div><\/details>\n    ${!C.provision ? `<section class=\"card\" id=\"guia\" style=\"margin-top:16px\"><div class=\"card-b row\"><i data-lucide=\"receipt\"><\/i><div style=\"flex:1\"><b>${UI.term(\"Guia de pagamento\", \"guia\")}<\/b><div class=\"help\">Liberada depois da aprovação. A guia é emitida no tribunal; o comprovante aparece aqui quando o pagamento for identificado.<\/div><\/div><button class=\"btn\" disabled>Pedir guia<\/button><\/div><\/section>` : \"\"}`;\n}\nfunction historico() {\n  const h = C.historico.length ? C.historico : [[p.data, \"Última mudança registrada\", D.TEAM[p.resp].nome]];\n  return `<section class=\"card\" style=\"margin-top:20px\"><div class=\"card-h\"><h2>O que aconteceu com o processo ${UI.chg(\"hist-nomes\")}<\/h2><\/div><div class=\"card-b\">${h.slice().reverse().map(([d, t, w]) => `<div class=\"row\" style=\"align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)\"><span class=\"mono subtle\" style=\"width:130px;font-size:12px\">${d}<\/span><span style=\"flex:1\">${t}<\/span><span class=\"help\">${w}<\/span><\/div>`).join(\"\")}\n    <details style=\"margin-top:12px\"><summary class=\"help\" style=\"cursor:pointer\">Detalhes técnicos para o suporte<\/summary><p class=\"help\">Tarefas internas da leitura e do cálculo, com tentativas e horários. Ficam fora da vista do dia a dia.<\/p><\/details><\/div><\/section>`;\n}\n\n/* ---------- painéis laterais ---------- */\nfunction openFolha(n) {\n  const f = C.folhas[n] || [\"Autos\", \"Trecho ilustrativo da folha.\"];\n  openSide(`<div class=\"side-h\"><i data-lucide=\"file-text\"><\/i><h2 style=\"flex:1\">Autos · fl. ${n}<\/h2><button class=\"icon-btn\" data-close aria-label=\"Fechar\"><i data-lucide=\"x\"><\/i><\/button><\/div>\n    <div class=\"side-b\"><p class=\"help\" style=\"margin-top:0\">${f[0]} · o trecho usado está marcado<\/p><div class=\"page\"><div class=\"pg\">fl. ${n}<\/div>${f[1]}<\/div><\/div>\n    <div class=\"side-f row\"><button class=\"btn\" onclick=\"UI.toast('Protótipo: abre o PDF já nesta folha.')\"><i data-lucide=\"external-link\"><\/i>Abrir o PDF nesta folha<\/button><button class=\"btn ghost\"><i data-lucide=\"download\"><\/i>Baixar<\/button><\/div>`);\n}\nfunction openAsk() {\n  openSide(`<div class=\"side-h\"><i data-lucide=\"message-circle-question\"><\/i><h2 style=\"flex:1\">Perguntar sobre o processo<\/h2><button class=\"icon-btn\" data-close aria-label=\"Fechar\"><i data-lucide=\"x\"><\/i><\/button><\/div>\n    <div class=\"side-b\"><div class=\"privacy\"><i data-lucide=\"lock\"><\/i><span><b>Só você vê esta conversa.<\/b> Aqui você só pergunta: nada do processo muda.<\/span><\/div>\n      <div class=\"msg me\">Por que a conta deu zero?<\/div>\n      <div class=\"msg\">A sentença de 17/07/2026 homologou um acordo entre o autor e a TAP ${fl(87)}. A TAP pagou R$ 4.112,71 por alvará em 21/08 ${fl(102)}. A Royal Air Maroc não participou do acordo e não foi condenada.<\/div>\n      <p class=\"help\">Exemplos: Quais pedidos a sentença deferiu? · Há recurso pendente? · Qual é o total e em que data?<\/p><\/div>\n    <div class=\"side-f\"><input class=\"input\" style=\"width:100%\" placeholder=\"Pergunte sobre o processo\" aria-label=\"Pergunta\"><p class=\"help\" style=\"margin:6px 0 0\">Para mudar a conta, use o Chat do cálculo, na aba Cálculo.<\/p><\/div>`);\n}\nfunction openCalcChat() {\n  openSide(`<div class=\"side-h\"><i data-lucide=\"message-square-diff\"><\/i><h2 style=\"flex:1\">Chat do cálculo<\/h2><button class=\"icon-btn\" data-close aria-label=\"Fechar\"><i data-lucide=\"x\"><\/i><\/button><\/div>\n    <div class=\"side-b\"><div class=\"privacy\" style=\"background:color-mix(in oklch,var(--state-needs_review) 12%,transparent);color:var(--fg)\"><i data-lucide=\"users\"><\/i><span><b>Visível para toda a equipe.<\/b> Este chat altera a conta. Nada vale antes de você confirmar, e cada confirmação gera uma versão nova.<\/span><\/div>\n      <div class=\"msg me\">A citação foi em 15/09/2026, pelo AR da fl. 31.<\/div>\n      <div class=\"msg\">Mudança proposta para a verba Danos morais:<table class=\"diff\"><thead><tr><th><\/th><th>Era<\/th><th>Ficou<\/th><\/tr><\/thead><tbody><tr><td>Juros desde<\/td><td>26/08/2026<\/td><td><b>15/09/2026<\/b><\/td><\/tr><tr><td>Juros<\/td><td>R$ 237,33<\/td><td><b>R$ 168,90<\/b><\/td><\/tr><tr><td>Total<\/td><td>R$ 10.423,39<\/td><td><b>R$ 10.354,96<\/b><\/td><\/tr><\/tbody><\/table>\n        <div class=\"row\" style=\"margin-top:10px\"><button class=\"btn primary\" onclick=\"UI.confirmDialog({title:'Confirmar a mudança?',body:'<p>Gera a versão 2 da memória com juros a partir de 15/09/2026. A versão 1 continua disponível para comparar.<\/p>',ok:'Confirmar e gerar versão 2',onOk:()=>UI.toast('Protótipo: versão 2 gerada.')})\">Confirmar<\/button><button class=\"btn\">Descartar<\/button><\/div><\/div><\/div>\n    <div class=\"side-f\"><input class=\"input\" style=\"width:100%\" placeholder=\"Pergunte ou peça uma mudança na conta\" aria-label=\"Mensagem\"><\/div>`);\n}\n\n/* ---------- montagem ---------- */\n// R8: depois de resolver um item, o foco segue para o próximo pendente (e a mudança é anunciada)\nfunction nextFocus() {\n  const el = document.querySelector('input[name=cli]:checked') || document.querySelector('input[name=zero]:checked') || document.querySelector('#approve:not([disabled])') || document.querySelector('#aprovar h2');\n  if (el) { if (el.tagName === \"H2\") el.tabIndex = -1; el.focus({ preventScroll: true }); el.scrollIntoView({ block: \"center\" }); }\n}\nfunction render() {\n  const body = { visao, documentos, timeline, calculo, historico }[aba] || visao;\n  $(\"#root\").innerHTML = header() + tabs() + body() +\n    `<button class=\"ask-fab\" id=\"ask\"><i data-lucide=\"message-circle-question\"><\/i>Perguntar sobre o processo<\/button><span class=\"chg-fab\" style=\"position:fixed;right:24px;bottom:66px;z-index:21\">${UI.chg(\"chat-perguntar\", \"Mudou: chat privado ao lado\")}<\/span>\n     <div class=\"mobile-bar\">${UI.chg(\"mobile-barra\", \"Mudou\")}<a class=\"btn primary\" href=\"?id=${p.id}&aba=${C.now.cta[1]}${C.now.cta[2]}\">${esc(C.now.cta[0])}<\/a><button class=\"btn icon\" id=\"askM\" aria-label=\"Perguntar sobre o processo\"><i data-lucide=\"message-circle-question\"><\/i><\/button><\/div>`;\n  icons(); bind();\n  $(\"#askM\").onclick = openAsk;\n  // R3: a jornada é uma parada só no Tab; as setas andam entre os passos\n  const steps = $$(\".step\");\n  steps.forEach((s, i) => s.addEventListener(\"keydown\", (e) => {\n    const k = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!k) return;\n    e.preventDefault(); const n = steps[(i + k + steps.length) % steps.length]; steps.forEach((x) => (x.tabIndex = -1)); n.tabIndex = 0; n.focus(); }));\n  const cur = $(\".step.current\"); if (cur && innerWidth < 820) cur.parentElement.scrollLeft = cur.offsetLeft - 40;\n  if (window.ANCHOR) document.querySelector(window.ANCHOR)?.scrollIntoView({ block: \"start\" });\n}\nfunction bind() {\n  $$(\"[data-fl]\").forEach((b) => (b.onclick = () => openFolha(b.dataset.fl)));\n  $(\"#ask\").onclick = openAsk;\n  $(\"#calcChat\") && ($(\"#calcChat\").onclick = openCalcChat);\n  const more = $(\"#more\"), menu = $(\"#moreMenu\");\n  more.onclick = () => { menu.hidden = !menu.hidden; more.setAttribute(\"aria-expanded\", !menu.hidden); };\n  $$(\"[data-act]\", menu).forEach((b) => (b.onclick = () => { menu.hidden = true;\n    if (b.dataset.act === \"reler\") confirmDialog({ title: \"Reler os autos?\", body: \"<p>O sistema lê todos os PDFs de novo. Isso tem custo e leva alguns minutos; a memória atual vira uma versão antiga.<\/p>\", ok: \"Reler os autos\", onOk: () => toast(\"Protótipo: leitura pedida.\") });\n    else confirmDialog({ title: \"Arquivar este processo?\", body: \"<p>Ele sai das filas e do Painel, mas continua na lista com o filtro Arquivado. Dá para desfazer.<\/p>\", ok: \"Arquivar\", onOk: () => toast(\"Protótipo: processo arquivado.\") }); }));\n  $$(\"[data-mark]\").forEach((b) => (b.onclick = () => { state.cliente = /maroc/i.test(b.dataset.mark) ? \"Royal Air Maroc\" : b.dataset.mark; toast(`${b.dataset.mark} marcada como cliente.`); render(); }));\n  $(\"#cliOk\") && ($(\"#cliOk\").onclick = () => { const v = $(\"input[name=cli]:checked\").value; state.cliente = v ? (/maroc/i.test(v) ? \"Royal Air Maroc\" : v) : \"—\"; render(); nextFocus(); toast(`Cliente indicada: ${state.cliente}.`); });\n  $(\"[data-undo-cliente]\") && ($(\"[data-undo-cliente]\").onclick = () => { state.cliente = null; render(); nextFocus(); });\n  $$(\"input[name=zero]\").forEach((r) => (r.onchange = () => ($(\"#zeroValor\").hidden = r.value !== \"valor\" || !r.checked)));\n  $(\"#zeroOk\") && ($(\"#zeroOk\").onclick = () => { state.zero = $(\"input[name=zero]:checked\").value; render(); nextFocus(); toast(state.zero === \"zero\" ? \"Decisão registrada: a cliente não deve nada.\" : \"Valor registrado.\"); });\n  $(\"[data-undo-zero]\") && ($(\"[data-undo-zero]\").onclick = () => { state.zero = null; render(); nextFocus(); });\n  $(\"#citOk\") && ($(\"#citOk\").onclick = () => { if (!$(\"#cit\").value) { toast(\"Informe a data da citação.\"); $(\"#cit\").focus(); return; } openCalcChat(); });\n  $(\"#approve\") && ($(\"#approve\").onclick = () => confirmDialog({ title: state.zero === \"zero\" ? \"Aprovar e encerrar sem valor?\" : `Aprovar a versão ${C.calc.memoria.versao}?`, body: `<p>${state.zero === \"zero\" ? \"A memória com valor zero fica congelada e o processo vai para Encerrado, sem guia.\" : `A memória de ${money(C.calc.memoria.total)} fica congelada e a guia pode ser pedida.`} Para mudar depois, é preciso remover a aprovação, com um motivo.<\/p>`, ok: \"Aprovar\", onOk: () => toast(\"Protótipo: memória aprovada.\") }));\n}\nrender();\n"}, "uploads.html": {"title": "Uploads · Contencioso", "tpl": "\n  <h1>Uploads<\/h1>\n  <p class=\"muted\" style=\"margin:6px 0 0;max-width:720px\">Envie os PDFs dos autos de uma vez, até de processos diferentes. O sistema acha o número do processo em cada arquivo e põe o documento no processo certo, ou cria o processo. Quando não tiver certeza, ele pergunta aqui em cima.<\/p>\n\n  <!-- o que precisa da pessoa vem antes da área de envio (com zoom de 200% continua na primeira tela) -->\n  <section class=\"card\" style=\"margin-top:20px\" id=\"pend\" aria-labelledby=\"pT\">\n    <div class=\"card-h\"><div><h2 id=\"pT\">Aguardando sua escolha <span class=\"badge plain\" style=\"--c:var(--state-needs_documents);margin-left:6px\" id=\"pN\"><\/span> <span data-c=\"up-topo\"><\/span><\/h2><p>Arquivos em que o sistema não achou o número do processo.<\/p><\/div><\/div>\n    <div class=\"card-b\" id=\"pendList\"><\/div>\n  <\/section>\n\n  <section class=\"card\" style=\"margin-top:16px\"><div class=\"card-b\"><div class=\"drop\">\n    <i data-lucide=\"upload-cloud\" style=\"width:28px;height:28px;color:var(--brand-400)\"><\/i>\n    <h3 style=\"margin-top:8px\">Arraste os PDFs aqui<\/h3>\n    <p class=\"muted\" style=\"margin:4px 0 12px\">Pode ser de processos diferentes. Cada arquivo vai para o processo do número que está nele. Só PDF.<\/p>\n    <div class=\"row\" style=\"justify-content:center;flex-wrap:wrap\"><label class=\"field\" style=\"flex-direction:row;align-items:center\" for=\"tipo\">Tipo do envio<\/label>\n      <select class=\"select\" id=\"tipo\"><option>Processo completo<\/option><option>Peça avulsa<\/option><\/select>\n      <button class=\"btn primary\" onclick=\"UI.toast('Protótipo: abriria a escolha de arquivos.')\">Escolher arquivos<\/button><\/div><\/div><\/div><\/section>\n\n  <section class=\"card\" style=\"margin-top:16px\" aria-labelledby=\"lT\">\n    <div class=\"card-h\"><div><h2 id=\"lT\">Lendo o texto<\/h2><p>O sistema está procurando o número do processo. Esta área se atualiza sozinha.<\/p><\/div><\/div>\n    <div class=\"card-b muted\">Nenhum arquivo sendo lido agora.<\/div>\n  <\/section>\n\n  <section class=\"card\" style=\"margin-top:16px\" aria-labelledby=\"rT\">\n    <div class=\"card-h\" style=\"flex-wrap:wrap\"><div style=\"flex:1\"><h2 id=\"rT\">Resolvidos · 31 <span data-c=\"up-resolvidos\"><\/span><\/h2><p>Arquivos que já foram para um processo.<\/p><\/div>\n      <input class=\"input\" placeholder=\"Filtrar por arquivo, número ou parte\" aria-label=\"Filtrar resolvidos\" id=\"rq\" style=\"width:280px\"><\/div>\n    <div class=\"card-b\" style=\"padding-top:8px\"><div class=\"table-wrap\" style=\"border:0\"><table class=\"responsive\" id=\"res\"><\/table><\/div><\/div>\n  <\/section>\n", "js": "\nconst { $, $$, esc, badge, icons, shell, toast, confirmDialog, D, proc } = UI;\nshell(\"Uploads\");\nconst U = D.UPLOADS_PENDENTES;\n$(\"#pN\").textContent = U.length;\n$(\"#pendList\").innerHTML = U.map((u, i) => `\n  <div class=\"row\" style=\"align-items:flex-start;gap:16px;flex-wrap:wrap\">\n    <div class=\"thumb\" aria-hidden=\"true\"><b>${esc(u.trecho.slice(0, 40))}<\/b><br>${esc(u.trecho.slice(40))}<\/div>\n    <div style=\"flex:1;min-width:280px\">\n      <div class=\"row\" style=\"flex-wrap:wrap;gap:8px\"><b>${esc(u.nome)}<\/b><span class=\"help\">${u.paginas} pág. · ${u.tamanho} · enviado por ${D.TEAM[u.por].nome} em ${u.enviado}<\/span><\/div>\n      <p class=\"muted\" style=\"margin:6px 0 10px\"><i data-lucide=\"triangle-alert\" style=\"color:var(--caution);vertical-align:-3px\"><\/i> Não encontramos o número do processo no texto. Pelo conteúdo, este parece ser o processo abaixo.<\/p>\n      <button class=\"link\" style=\"font-size:12px\" data-prev><i data-lucide=\"eye\"><\/i>Ver o documento<\/button>\n      <fieldset style=\"border:0;padding:0;margin:12px 0 0\"><legend class=\"field\" style=\"margin-bottom:4px\">Qual é o processo deste documento? ${UI.chg(\"up-sugestao\")}<\/legend>\n        ${u.sugestoes.map((s, j) => { const p = proc(s.id); return `<label class=\"sugg\"><input type=\"radio\" name=\"p${i}\" value=\"${p.id}\" ${j === 0 ? \"checked\" : \"\"}><span style=\"flex:1\"><span class=\"mono\" style=\"font-size:12px\">${p.numero}<\/span> · ${esc(p.autor)}<span class=\"help\" style=\"display:block\">Sugestão: ${esc(s.porque)}<\/span><\/span>${badge(p.estado)}<\/label>`; }).join(\"\")}\n        <label class=\"sugg\"><input type=\"radio\" name=\"p${i}\" value=\"outro\"><span style=\"flex:1\">Outro processo<\/span><\/label>\n        <div id=\"outro${i}\" hidden style=\"margin-top:8px\"><label class=\"field\" for=\"o${i}\">Número do processo ou nome de uma parte<\/label>\n          <input class=\"input\" id=\"o${i}\" style=\"width:100%;max-width:420px\" placeholder=\"Ex.: 4035231 ou Camila\" autocomplete=\"off\">\n          <div class=\"err\" id=\"oe${i}\" hidden><\/div><div id=\"ol${i}\"><\/div><\/div>\n      <\/fieldset>\n      <div class=\"row\" style=\"margin-top:14px;flex-wrap:wrap\"><button class=\"btn primary\" data-ok=\"${i}\"><i data-lucide=\"link\"><\/i>Incluir no processo<\/button><button class=\"btn ghost danger\" data-disc><i data-lucide=\"trash-2\"><\/i>Descartar arquivo<\/button><\/div>\n    <\/div><\/div>`).join(\"\");\nconst norm = (s) => (s || \"\").normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").toLowerCase().replace(/[^a-z0-9]/g, \"\");\n$$(\"input[name=p0]\").forEach((r) => r.onchange = () => { $(\"#outro0\").hidden = r.value !== \"outro\"; if (r.value === \"outro\") $(\"#o0\").focus(); });\n$(\"#o0\").oninput = (e) => {\n  const q = norm(e.target.value);\n  const err = $(\"#oe0\");\n  if (/[a-z]/.test(q) && q.length < 3) { err.hidden = false; err.textContent = \"Digite pelo menos 3 letras do nome.\"; } else err.hidden = true;\n  const hits = q.length >= 3 ? D.procs.filter((p) => norm(p.numero).includes(q) || norm(p.titulo).includes(q)).slice(0, 5) : [];\n  $(\"#ol0\").innerHTML = hits.map((p) => `<label class=\"sugg\"><input type=\"radio\" name=\"p0b\" value=\"${p.id}\"><span class=\"mono\" style=\"font-size:12px\">${p.numero}<\/span><span class=\"muted\">${esc(p.autor)}<\/span><\/label>`).join(\"\") || (q.length >= 3 ? `<p class=\"help\">Nenhum processo com \"${esc(e.target.value)}\". Se o número estiver certo, o processo será criado.<\/p>` : \"\");\n};\n$(\"[data-prev]\").onclick = () => UI.openSide(`<div class=\"side-h\"><i data-lucide=\"file-text\"><\/i><h2 style=\"flex:1\">${esc(U[0].nome)}<\/h2><button class=\"icon-btn\" data-close aria-label=\"Fechar\"><i data-lucide=\"x\"><\/i><\/button><\/div><div class=\"side-b\"><div class=\"page\"><div class=\"pg\">pág. 1<\/div>${esc(U[0].trecho)}<\/div><p class=\"help\">Conteúdo ilustrativo do protótipo.<\/p><\/div>`);\n$(\"[data-ok]\").onclick = () => { const v = $(\"input[name=p0]:checked\").value; const id = v === \"outro\" ? $(\"input[name=p0b]:checked\")?.value : v;\n  if (!id) { toast(\"Escolha um processo da lista.\"); return; }\n  const p = proc(id); confirmDialog({ title: \"Incluir neste processo?\", body: `<p>O arquivo entra em <b class=\"mono\">${p.numero}<\/b> (${esc(p.autor)}) e a leitura dos autos é refeita com ele.<\/p>`, ok: \"Incluir no processo\", onOk: () => toast(\"Protótipo: arquivo incluído; a leitura começou.\") }); };\n$(\"[data-disc]\").onclick = () => confirmDialog({ title: \"Descartar este arquivo?\", body: \"<p>Ele sai dos Uploads e não vai para nenhum processo.<\/p>\", ok: \"Descartar\", danger: true, onOk: () => toast(\"Protótipo: arquivo descartado.\") });\nconst resolved = D.procs.slice(0, 31).map((p, i) => ({ arquivo: i % 3 === 0 ? \"Autos completos\" : i % 3 === 1 ? \"Autos · parte 1\" : \"Íntegra do processo\", pags: 40 + (i * 13) % 300, p, quando: p.data }));\nconst renderRes = () => { const q = norm($(\"#rq\").value); $(\"#res\").innerHTML = `<thead><tr><th>Arquivo<\/th><th>Foi para<\/th><th>Como<\/th><th>Quando<\/th><\/tr><\/thead><tbody>` +\n  resolved.filter((r) => !q || norm(r.arquivo + r.p.numero + r.p.titulo).includes(q)).map((r) => `<tr><td data-l=\"Arquivo\"><i data-lucide=\"file-text\" style=\"vertical-align:-3px\"><\/i> ${r.arquivo}<div class=\"help\">${r.pags} pág.<\/div><\/td><td data-l=\"Foi para\"><a class=\"link mono\" style=\"font-size:12px\" href=\"processo.html?id=${r.p.id}\">${r.p.numero}<\/a><div class=\"help\">${esc(r.p.autor)}<\/div><\/td><td data-l=\"Como\"><span class=\"tag\">Número achado no texto<\/span><\/td><td data-l=\"Quando\">${r.quando}<\/td><\/tr>`).join(\"\") + `<\/tbody>`; icons(); };\n$(\"#rq\").oninput = renderRes; renderRes();\n"}};</script>
+<script>/* Dados do protótipo.
+   Número, partes, tribunal, fase e data vêm do staging (16/11/2026).
+   Cliente normalizada, motivo, responsável e valores são ILUSTRATIVOS (hipótese de protótipo),
+   exceto os processos 24, 29, 4 e 7, que seguem o que foi visto no staging. */
+window.DATA = (function () {
+  const TEAM = {
+    bruna: { nome: "Bruna Martins", ini: "BM", papel: "Entrada de documentos" },
+    rafael: { nome: "Rafael Moura", ini: "RM", papel: "Conferência" },
+    thiago: { nome: "Thiago Lopes", ini: "TL", papel: "Conferência" },
+    helena: { nome: "Helena Duarte", ini: "HD", papel: "Aprovação" },
+    sistema: { nome: "Sistema", ini: "", papel: "Leitura e cálculo" },
+  };
+  // estados: os mesmos do sistema + "provision" (provisão feita, antes da sentença), que hoje aparece como "Calculado"
+  const STATES = {
+    needs_documents: { label: "Faltam documentos", c: "var(--state-needs_documents)" },
+    needs_review: { label: "Precisa de você", c: "var(--state-needs_review)" },
+    provision: { label: "Provisão feita", c: "var(--state-calculated)", outline: true },
+    calculated: { label: "Pronto para aprovar", c: "var(--state-calculated)" },
+    processing: { label: "Lendo os autos", c: "var(--state-processing)" },
+    approved: { label: "Aprovado", c: "var(--state-approved)" },
+  };
+  const CLIENTS = [
+    [/maroc/i, "Royal Air Maroc"], [/arajet/i, "Arajet"], [/taag/i, "TAAG"],
+    [/ethiopian/i, "Ethiopian Airlines"], [/finnair/i, "Finnair"], [/westjet/i, "WestJet"],
+  ];
+  // id, número, título, tribunal, fase, estado, última mudança, motivo, responsável, tipo de valor, valor
+  const raw = [
+    [29, "0719757-96.2026.8.07.0020", "Marina Alves Toledo × Arajet S/A.", "TJDFT", "Inicial", "provision", "09/11/2026 13:12", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 10423.39],
+    [28, "1029283-63.2026.8.13.0079", "Caio Henrique Prado × Compagnie Nationale Royal Air Maroc", "TJMG", "Inicial", "provision", "09/11/2026 13:09", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 12880.10],
+    [27, "4012223-94.2026.8.26.0004", "Luísa Fernandes Rocha × Compagnie Nationale Royal Air Maroc (royal Air Maroc)", "TJSP", "Inicial", "provision", "09/11/2026 13:04", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 15210.44],
+    [26, "4003145-26.2026.8.26.0441", "Otávio Siqueira Lemos × Arajet S.A.", "TJSP", "Inicial", "needs_review", "09/11/2026 13:01", "A data da citação não foi encontrada nos autos.", "rafael", "prov", 9876.00],
+    [25, "0814602-46.2026.8.20.5004", "Renata Morais Pacheco × Compagnie Nationale Royalair Maroc", "TJRN", "Inicial", "provision", "09/11/2026 12:57", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 8340.72],
+    [24, "1000558-52.2026.8.13.0180", "Bruno Teixeira Campos × Transportes Aereos Portugueses SA e Compagnie Nationale Royalair Maroc", "TJMG", "Execução", "needs_review", "09/11/2026 15:35", "Indicar qual ré é a cliente e confirmar o acordo (conta deu zero).", "rafael", "cond", 0],
+    [23, "4011769-78.2026.8.26.0016", "Juliana Paes Ribeiro × ROYAL AIR MAROC (Compagnie Nationale Royal Air Maroc)", "TJSP", "Execução", "needs_review", "09/11/2026 12:50", "Valor das custas não está nos autos.", "thiago", "cond", 7412.33],
+    [22, "4041558-22.2026.8.26.0114", "André Lucas Monteiro × Arajet S.A.", "TJSP", "Inicial", "provision", "09/11/2026 11:04", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 11050.00],
+    [21, "4012287-68.2026.8.26.0016", "Carla Duarte Vieira × Ethiopian Airlines Group", "TJSP", "Inicial", "provision", "09/11/2026 11:00", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 9120.58],
+    [20, "5850028-78.2026.8.09.0012", "Título não identificado", "TJGO", "—", "needs_review", "09/11/2026 10:58", "A leitura não achou as partes. Confirme o título.", "thiago", "none", null],
+    [19, "0001908-24.2026.8.04.7300", "Felipe Barros Nunes × Arajet S.A.", "TJAM", "Inicial", "provision", "09/11/2026 10:53", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 7980.00],
+    [18, "4004255-29.2026.8.26.0322", "Patrícia Lima Azevedo × Azul Linhas Aéreas Brasileiras S.A. e Arajet S.A.", "TJSP", "Inicial", "needs_review", "09/11/2026 10:45", "Indicar qual ré é a cliente.", "rafael", "prov", 13400.00],
+    [17, "5046398-38.2026.8.08.0024", "Rodrigo Cunha Matos × Taag Linhas Aereas de Angola", "TJES", "Inicial", "provision", "09/11/2026 10:44", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 10780.21],
+    [16, "4004707-28.2026.8.26.0358", "Tatiane Gomes Sales × Arajet S.A.", "TJSP", "Inicial", "needs_review", "09/11/2026 10:42", "A data da citação não foi encontrada nos autos.", "thiago", "prov", 8650.00],
+    [15, "4016236-35.2026.8.26.0361", "Eduardo Ramos Pinto × Ethiopian Airlines Group e Expedia do Brasil Agência de Viagens e Turismo Ltda.", "TJSP", "Inicial", "needs_review", "09/11/2026 10:42", "Indicar qual ré é a cliente.", "rafael", "prov", 12100.00],
+    [14, "4000599-91.2025.8.26.0001", "Larissa Freitas Moura × Finnair Plc", "TJSP", "Execução", "calculated", "06/11/2026 16:03", "Memória conferida por Rafael Moura. Aguarda aprovação.", "helena", "cond", 6830.47],
+    [13, "0863533-81.2026.8.19.0001", "Gustavo Henrique Leal × Taag Linhas Aereas de Angola", "TJRJ", "Sentença", "needs_review", "06/11/2026 15:58", "Sentença reformada no recurso: confirmar o valor do acórdão.", "rafael", "cond", 15900.00],
+    [12, "0817812-06.2026.8.19.0002", "Aline Moreira Castro × Decolar.com Ltda e Taag Linhas Aereas de Angola", "TJRJ", "Sentença", "calculated", "06/11/2026 15:51", "Memória conferida por Thiago Lopes. Aguarda aprovação.", "helena", "cond", 5400.00],
+    [11, "0815240-79.2026.8.20.5004", "Fábio Antunes Reis × Westjet Airlines Ltd.", "TJRN", "Inicial", "provision", "06/11/2026 15:42", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 6200.00],
+    [10, "5039236-69.2025.8.21.0022", "Sabrina Lopes Farias × Compagnie Nationale Royalair Maroc", "TJRS", "Sentença", "needs_review", "06/11/2026 15:39", "Valor dos honorários não está nos autos.", "thiago", "cond", 9310.00],
+    [9, "0804024-71.2026.8.19.0212", "Leonardo Couto Brandão × Livelo S.A. e Taag Linhas Aereas de Angola", "TJRJ", "Sentença", "needs_review", "06/11/2026 15:33", "Indicar qual ré é a cliente.", "rafael", "cond", 8800.00],
+    [8, "1085788-45.2026.8.13.0024", "Vanessa Ribeiro Lima × Taag Linhas Aereas de Angola e Booking.com Brasil Servicos de Reserva de Hoteis Ltda.", "TJMG", "Execução", "calculated", "06/11/2026 15:25", "Memória conferida por Rafael Moura. Aguarda aprovação.", "helena", "cond", 11240.90],
+    [7, "0806609-49.2026.8.19.0066", "Ricardo Assis Melo × Smiles Fidelidade S A e Compagnie Nationale Royalair Maroc", "TJRJ", "Sentença", "needs_documents", "06/11/2026 15:21", "Falta a planilha da liquidação: a sentença não diz o valor.", "bruna", "none", null],
+    [6, "4077549-38.2025.8.26.0100", "Daniela Correia Dias × Booking.com Brasil Servicos de Reserva de Hoteis Ltda. e Arajet SA", "TJSP", "Execução", "needs_review", "03/11/2026 12:23", "Indicar qual ré é a cliente.", "rafael", "cond", 6100.00],
+    [5, "4003189-95.2026.8.26.0101", "Mateus Oliveira Bastos × Ethiopian Airlines Group", "TJSP", "Inicial", "needs_review", "03/11/2026 10:38", "A data da citação não foi encontrada nos autos.", "thiago", "prov", 7700.00],
+    [4, "4035231-09.2026.8.26.0002", "Camila Rezende Porto × Compagnie Nationale Royalair Maroc", "TJSP", "Sentença", "needs_documents", "03/11/2026 10:36", "Falta a planilha da liquidação homologada.", "bruna", "none", null],
+    [3, "0762741-10.2026.8.07.0016", "Thiago Moura Salles × Compagnie Nationale Royalair Maroc", "TJDFT", "Inicial", "provision", "05/11/2026 17:32", "Estimativa a partir dos pedidos. Aguarda sentença.", "sistema", "prov", 9050.00],
+    [2, "1002783-45.2026.8.11.0004", "Priscila Araújo Neves × Ethiopian Airlines Enterprise e Latam Airlines Group S.A.", "TJMT", "Sentença", "needs_review", "31/10/2026 11:18", "Valor das custas não está nos autos.", "thiago", "cond", 10220.00],
+    [1, "4011910-73.2025.8.26.0003", "Henrique Lacerda Faria × Decolar. Com Ltda e Ethiopian Airlines Group", "TJSP", "Execução", "needs_review", "31/10/2026 10:58", "Prazo de 15 dias para pagar vence em 20/11.", "thiago", "cond", 4980.00],
+  ];
+  const UNCLEAR = new Set([24, 18, 15, 9, 6]); // cliente ainda não indicada
+  const procs = raw.map(([id, numero, titulo, tribunal, fase, estado, data, motivo, resp, tipo, valor]) => {
+    const [autor, reus] = titulo.split(" × ");
+    const found = CLIENTS.filter(([re]) => re.test(titulo)).map(([, n]) => n);
+    const cliente = UNCLEAR.has(id) ? null : found[0] || null;
+    const sugestao = found[0] || null;
+    const [d, h] = data.split(" ");
+    const [dd, mm, yy] = d.split("/");
+    return { id, numero, titulo, autor, reus: reus || "", tribunal, fase, estado, data, sort: `${yy}${mm}${dd}${h}`, motivo, resp, tipo, valor, cliente, sugestao };
+  }).sort((a, b) => b.sort.localeCompare(a.sort));
+  const UPLOADS_PENDENTES = [{
+    nome: "06_Ligacao_03-09.pdf", original: "20261106205551_248b7a8c_06_Ligacao_03-09-4b5ee4a4.pdf",
+    paginas: 1, tamanho: "70,3 kB", enviado: "09/11/2026 12:44", por: "bruna",
+    trecho: "Transcrição de ligação · 03/09/2026 · Atendimento ao cliente · Passageira Camila Rezende Porto relata bagagem danificada no voo AT 216 (São Paulo → Casablanca → Porto)…",
+    sugestoes: [{ id: 4, porque: "o nome Camila Rezende Porto aparece no texto" }],
+  }];
+  return { TEAM, STATES, procs, UPLOADS_PENDENTES, CLIENT_NAMES: [...new Set(CLIENTS.map(c => c[1]))] };
+})();
+</script>
+<script>/* Conteúdo dos processos do protótipo.
+   24, 29 e 4 seguem o que o staging mostrava em 16/11/2026 (textos dos autos, datas, valores).
+   14 é ilustrativo (estado "pronto para aprovar", que não existia no staging). Os demais usam um modelo genérico. */
+window.CASES = {
+  24: {
+    current: 4,
+    steps: ["Autos completos", "Concluída", "Sem dúvidas", "Versão 1", "2 pendências", "", "", ""],
+    now: { mode: "person", lead: "Indique a cliente e confirme o acordo", why: "A leitura não diz qual das duas rés a equipe defende, e a conta deu zero porque a sentença homologou um acordo da TAP com o autor (fl. 87). Sem resolver esses dois pontos, a memória não pode ser aprovada.", cta: ["Resolver as 2 pendências", "calculo", "#aprovar"] },
+    leitura: { fase: "Execução", processual: "Encerrado", titulo: "Sentença de 17/07/2026 · Juiz", desfecho: "Acordo homologado com a TAP", pend: ["Sentença ilíquida: valor a apurar em liquidação"] },
+    partes: [["Bruno Teixeira Campos", "Autor", "Bianca Torres Medeiros, Sérgio Paiva Costa"], ["Transportes Aereos Portugueses SA (TAP)", "Ré", null], ["Compagnie Nationale Royalair Maroc", "Ré", null]],
+    resumo: "Bruno Teixeira Campos move ação cível contra a TAP e a Royal Air Maroc, ajuizada em 11/03/2026, com valor da causa de R$ 55.000,00. Relata mudança de itinerário, pernoite em Lisboa e mau atendimento no guichê. Pede indenização por danos morais.",
+    timeline: [
+      ["11/03/2026", "Ajuizamento", "O autor ajuizou a ação, com valor da causa de R$ 55.000,00.", "Pede danos morais (R$ 55.000,00), custas, honorários de 20%, inversão do ônus da prova e justiça gratuita.", 2, "Petição inicial"],
+      ["11/03/2026", "Despacho", "Despacho da secretaria: intimação registrada no eproc.", "Nenhum prazo identificado.", 14, null],
+      ["19/03/2026", "Acordo", "Acordo entre o autor e a TAP: a TAP pagará R$ 4.000,00 por depósito judicial.", "A Royal Air Maroc não aparece no acordo.", 61, "Termo de acordo"],
+      ["17/07/2026", "Sentença", "A sentença homologa o acordo entre o autor e a TAP e extingue o processo com resolução de mérito.", "Título vigente. Não condena a Royal Air Maroc.", 87, "Sentença"],
+      ["21/08/2026", "Despacho", "Despacho da secretaria: intimação registrada no eproc.", "Nenhum prazo identificado.", 98, null],
+      ["21/08/2026", "Pagamento", "Alvará eletrônico: pagamento de R$ 4.112,71 ao advogado do autor.", "Pagamento feito pela TAP. Processo encerrado.", 102, "Alvará"],
+    ],
+    calc: {
+      memoria: { versao: 1, rotulo: "Em conferência", total: 0, parte: 0, ref: "10/11/2026", refPassou: true },
+      checklist: "cliente_zero",
+      verbas: [],
+      fases: [["Petição inicial", "11/03/2026", 55000, "1 de 6 pedidos com valor"], ["Contestação", "—", 55000, "A cliente não contestou: repete a inicial."], ["Sentença", "17/07/2026", 0, "Acordo homologado com a TAP."]],
+    },
+    folhas: { 87: ["Sentença · 17/07/2026", "Vistos etc. … <mark>HOMOLOGO, para que produza seus jurídicos e legais efeitos, o acordo celebrado entre o autor e TRANSPORTES AEREOS PORTUGUESES S/A</mark>, e, em consequência, JULGO EXTINTO o feito, com resolução de mérito, nos termos do art. 487, III, “b”, do CPC…"], 102: ["Alvará eletrônico · 21/08/2026", "… expede-se alvará em favor de <mark>BIANCA TORRES MEDEIROS, no valor de R$ 4.112,71</mark>, referente ao depósito judicial efetuado pela requerida TAP…"], 2: ["Petição inicial · 11/03/2026", "BRUNO TEIXEIRA CAMPOS, brasileiro, … vem propor a presente AÇÃO DE INDENIZAÇÃO POR DANOS MORAIS em face de TRANSPORTES AEREOS PORTUGUESES S/A e COMPAGNIE NATIONALE ROYAL AIR MAROC…"], 61: ["Termo de acordo · 19/03/2026", "… a requerida TAP pagará ao autor <mark>a quantia de R$ 4.000,00 (quatro mil reais)</mark>, mediante depósito judicial…"], 14: ["Ato ordinatório", "Encaminho para disponibilização no Diário Eletrônico…"], 98: ["Ato ordinatório", "Encaminho para disponibilização no Diário Eletrônico…"] },
+    historico: [["09/11/2026 12:46", "Processo cadastrado a partir de Uploads", "Bruna Martins"], ["09/11/2026 12:56", "Leitura dos autos concluída: faltava parte dos autos", "Sistema"], ["09/11/2026 15:29", "Bruna Martins enviou a parte 2 dos autos", "Bruna Martins"], ["09/11/2026 15:35", "Leitura dos autos concluída", "Sistema"], ["09/11/2026 15:36", "Memória de cálculo gerada (versão 1)", "Sistema"], ["09/11/2026 15:36", "Encaminhado para conferência: cliente não identificada, conta zerada", "Sistema"]],
+  },
+  29: {
+    current: 4, provision: true,
+    steps: ["Autos completos", "Concluída", "Sem dúvidas", "Provisão", "Aguarda sentença", "", "", ""],
+    now: { mode: "wait", lead: "Provisão feita · aguardando a sentença", why: "Sem sentença, o sistema estimou R$ 10.423,39 a partir dos pedidos da inicial. A estimativa serve para provisionar: não é aprovada e não gera guia. Quando a sentença chegar aos autos, a memória é refeita e vem para conferência.", cta: ["Conferir 1 ponto da estimativa", "calculo", "#aprovar"] },
+    leitura: { fase: "Inicial", processual: "Conhecimento", titulo: "—", desfecho: "Sem sentença", pend: ["Data da citação não encontrada nos autos lidos"] },
+    partes: [["Marina Alves Toledo", "Autor", null], ["Arajet S/A.", "Ré · cliente", null]],
+    resumo: "Marina Alves Toledo move ação cível contra a Arajet, ajuizada em 26/08/2026. Pede indenização por danos morais de R$ 10.000,00.",
+    timeline: [["26/08/2026", "Ajuizamento", "O autor ajuizou a ação pedindo danos morais de R$ 10.000,00.", "Sem citação encontrada nos autos lidos.", 2, "Petição inicial"]],
+    calc: {
+      memoria: { versao: 1, rotulo: "Provisão em vigor", total: 10423.39, parte: 10423.39, ref: "10/11/2026" },
+      checklist: "provisao",
+      verbas: [{ nome: "Danos morais", partida: 10000, corrigido: 10186.06, juros: 237.33, total: 10423.39, origem: ["Petição inicial · 26/08/2026", "2-12", "condenando a Companhia Ré a indenizar o Autor, no tocante aos danos morais, no importe de R$10.000,00 (dez mil reais);"],
+        correcao: ["26/08/2026 a 10/11/2026", "IPCA", "ajuizamento (a citação não foi encontrada)", [["08/2026", "6/31", "-0,32%", "-R$ 6,20", "R$ 9.993,80"], ["09/2026", "30/30", "0,82%", "R$ 81,95", "R$ 10.075,75"], ["10/2026", "31/31", "0,82% (último publicado)", "R$ 82,62", "R$ 10.158,37"], ["11/2026", "10/30", "0,82% (último publicado)", "R$ 27,69", "R$ 10.186,06"]]],
+        juros: ["26/08/2026 a 10/11/2026", "Taxa legal (Selic − IPCA)", "ajuizamento (a citação não foi encontrada)", [["08/2026", "6/31", "1,1545%", "R$ 22,33"], ["09/2026", "30/30", "1,4991%", "R$ 151,05"], ["10/2026", "31/31", "0,3790%", "R$ 38,50"], ["11/2026", "10/30", "0,7496%", "R$ 25,45"]]] }],
+      fases: [["Petição inicial", "26/08/2026", 10000, "1 pedido com valor"]],
+    },
+    folhas: { 2: ["Petição inicial · 26/08/2026 · fl. 2", "MARINA ALVES TOLEDO, brasileiro, inscrito no CPF … vem, respeitosamente, <mark>em 26 de agosto de 2026</mark>, propor AÇÃO DE INDENIZAÇÃO em face de ARAJET S.A. … requer: <mark>a) a condenação da Companhia Ré a indenizar o Autor, no tocante aos danos morais, no importe de R$ 10.000,00</mark>…"] },
+    historico: [["09/11/2026 12:44", "Processo cadastrado a partir de Uploads", "Bruna Martins"], ["09/11/2026 13:10", "Leitura dos autos concluída", "Sistema"], ["09/11/2026 13:12", "Memória de provisão gerada (versão 1)", "Sistema"]],
+  },
+  4: {
+    current: 0,
+    steps: ["Falta 1 documento", "", "", "", "", "", "", ""],
+    now: { mode: "person", lead: "Envie a planilha da liquidação", why: "A sentença de 03/08 (fl. 211) não diz o valor: ela manda apurar em liquidação. Os embargos foram rejeitados em 08/09 e a sentença continua valendo. Sem a planilha homologada, a leitura não consegue montar a conta.", cta: ["Enviar a planilha", "documentos", "#faltam"] },
+    leitura: { fase: "Sentença", processual: "Recursal", titulo: "Sentença de 03/08/2026 · Juiz", desfecho: "Sentença ilíquida", pend: ["Sentença ilíquida sem planilha homologada"] },
+    partes: [["Camila Rezende Porto", "Autora", "Natália Vidal Santos"], ["Compagnie Nationale Royalair Maroc", "Ré · cliente", null]],
+    resumo: "Camila Rezende Porto move ação cível contra a Royal Air Maroc, ajuizada em 06/05/2026, com valor da causa de R$ 16.150,00. Relata bagagem danificada no desembarque no Porto, com cadeado violado e zíper danificado.",
+    timeline: [["06/05/2026", "Ajuizamento", "A autora ajuizou a ação, com valor da causa de R$ 16.150,00.", "11 pedidos.", 1, "Petição inicial"], ["07/05/2026", "Despacho", "O juiz manda a autora emendar a inicial com comprovante de domicílio.", "Prazo de 15 dias · venceu por volta de 28/05/2026.", 40, null], ["03/08/2026", "Sentença", "Sentença ilíquida: o valor será apurado em liquidação.", "Título vigente.", 211, "Sentença"], ["08/09/2026", "Embargos", "Embargos de declaração rejeitados: a sentença continua valendo.", "", 240, "Decisão"]],
+    calc: null,
+    folhas: { 211: ["Sentença · 03/08/2026", "… o valor da condenação <mark>será apurado em liquidação de sentença</mark>, mediante apresentação de planilha…"] },
+    historico: [["03/11/2026 10:30", "Processo cadastrado a partir de Uploads", "Bruna Martins"], ["03/11/2026 10:36", "Leitura dos autos parou: falta a planilha da liquidação", "Sistema"]],
+  },
+  14: {
+    current: 5,
+    steps: ["Autos completos", "Concluída", "Sem dúvidas", "Versão 2", "Rafael Moura, 06/11", "Pronto", "", ""],
+    now: { mode: "person", lead: "Aprove a memória (versão 2)", why: "Rafael Moura conferiu em 06/11 e não há nada pendente. Ao aprovar, a memória congela; para mudar depois será preciso remover a aprovação, com um motivo.", cta: ["Ver e aprovar", "calculo", "#aprovar"] },
+    leitura: { fase: "Execução", processual: "Cumprimento de sentença", titulo: "Acórdão de 12/09/2026 · TJSP", desfecho: "Procedente em parte", pend: [] },
+    partes: [["Larissa Freitas Moura", "Autora", null], ["Finnair Plc", "Ré · cliente", null]],
+    resumo: "Larissa Freitas Moura move ação cível contra a Finnair (ilustrativo).",
+    timeline: [["12/09/2026", "Acórdão", "O tribunal manteve a condenação em danos morais de R$ 5.000,00 e honorários de 15%.", "Título vigente.", 188, "Acórdão"]],
+    calc: { memoria: { versao: 2, rotulo: "Conferida", total: 6830.47, parte: 6830.47, ref: "16/11/2026" }, checklist: "ok",
+      verbas: [{ nome: "Danos morais", partida: 5000, corrigido: 5412.1, juros: 527.05, total: 5939.15, origem: ["Acórdão · 12/09/2026", "188", "…mantida a condenação em danos morais no valor de R$ 5.000,00…"] }, { nome: "Honorários (15%)", partida: 890.87, corrigido: 890.87, juros: 0, total: 890.87, origem: ["Acórdão · 12/09/2026", "190", "…honorários majorados para 15% sobre o valor da condenação."] }],
+      fases: [["Petição inicial", "02/2025", 20000, ""], ["Sentença", "05/2026", 5000, ""], ["Acórdão", "09/2026", 5000, "Mantida"]] },
+    folhas: { 188: ["Acórdão · 12/09/2026", "… <mark>mantida a condenação em danos morais no valor de R$ 5.000,00</mark> …"], 190: ["Acórdão · 12/09/2026", "… <mark>honorários majorados para 15%</mark> sobre o valor da condenação."] },
+    historico: [["06/11/2026 15:40", "Rafael Moura informou as custas (R$ 0,00, isenção)", "Rafael Moura"], ["06/11/2026 15:42", "Memória de cálculo · versão 2", "Sistema"], ["06/11/2026 16:03", "Rafael Moura marcou a memória como conferida", "Rafael Moura"]],
+  },
+};
+</script>
+<script>/* Camada de anotação "O que mudou": etiquetas junto de cada mudança da experiência.
+   Cada item: [título, antes (sistema atual em 16/11/2026), agora (protótipo), por quê (achado)]. */
+window.CHANGES = {
+  "menu-contador": ["Contadores no menu", "O menu não mostrava quanto havia pendente em cada área.", "Painel e Uploads mostram quantos itens esperam por alguém.", "O arquivo pendente em Uploads não aparecia em lugar nenhum, e ninguém via que havia algo esperando (achados E3, N4)."],
+  "busca-rapida": ["Busca rápida acha processo e cliente", "\"Buscar ou ir para…\" só levava às telas do menu. Nome ou número davam \"Nada encontrado\".", "Encontra cliente, processo (por pedaço do número, parte ou cliente) e telas. Quando não acha, diz o que tentar.", "Quem é novo digitava o nome na busca do topo, via \"Nada encontrado\" e concluía que o processo não existia (E1, N9)."],
+  "painel-fila": ["Fila de trabalho por papel", "17 itens iguais (\"Precisa de revisão\"), sem motivo e sem dono. \"Aguardando aprovação\" dizia \"Nada esperando por você\".", "\"O que espera por você\" vem primeiro, filtrado pelo papel. Cada item tem motivo, cliente, valor, responsável e um botão que leva ao lugar de resolver.", "No teste, nenhuma das três personas que aprovam conseguiu dizer o que decidir hoje, com quem estava e por quê (N3, A4, Q8)."],
+  "painel-upload": ["Arquivo sem processo entra na fila", "A pendência de Uploads não aparecia no Painel.", "O arquivo vira um item da fila de quem cuida da entrada, já com a sugestão de processo.", "A estagiária não sabia que havia um arquivo esperando por ela (E3, N4)."],
+  "painel-comquem": ["Com quem está cada processo", "\"Quem trabalha\" só aparecia dentro do processo, e dizia \"Sua equipe\".", "Pessoa, papel, quantidade e motivo, num cartão só.", "Ninguém conseguia saber com quem cada processo estava parado (A4, N3)."],
+  "painel-carteira": ["Carteira por cliente", "Não existia visão por cliente. Para separar provisão de condenação, era preciso abrir processo por processo.", "Por cliente: quantos processos, quanto é provisão, quanto é condenação, e quantos ainda têm a cliente a confirmar.", "Para responder à cliente, a coordenação buscou \"Royal Air Maroc\" e achou 3 processos, quando eram 9; e precisava abrir um por um para separar provisão de condenação (N1, N2)."],
+  "painel-funil": ["Funil vai para o fim", "O funil ocupava a primeira tela (no celular, a tela inteira), com rótulos cortados.", "Barra única com legenda clicável, depois do que pede ação.", "No celular, o funil ocupava a primeira tela e escondia o que pedia ação (N6)."],
+  "lista-busca": ["Busca que entende a grafia da cliente", "\"Royal Air Maroc\" trazia 3 processos. \"Royalair Maroc\" e \"ROYAL AIR MAROC\" ficavam de fora, sem aviso.", "A busca ignora acento, maiúsculas e grafia: \"Royal Air Maroc\" traz os 9.", "O nome da cliente aparece com grafias diferentes nos autos, e a busca perdia 6 de 9 processos sem avisar (N1)."],
+  "lista-cliente": ["Filtro por cliente", "Não havia filtro por cliente.", "Cliente com nome único (normalizado), em filtro e em selo em cada linha.", "A equipe atende várias companhias aéreas e não tinha como ver só os processos de uma delas (N1)."],
+  "lista-valor": ["Filtro por tipo de valor", "Nada separava provisão de condenação. A fase não resolvia: havia processo na fase Sentença sem cálculo.", "Filtro Provisão, Condenação ou Sem valor ainda; o tipo aparece em cada linha.", "Não dava para saber, pela lista, o que era estimativa e o que era condenação (N2, A5)."],
+  "lista-situacao": ["Situação com motivo e responsável", "Só o selo do status. A lista não estava na ordem da coluna \"Última mudança\".", "Selo, motivo em frase e com quem está. Ordem padrão pela última mudança, e todas as colunas ordenam.", "O status vinha sem motivo e sem dono, e a lista não estava na ordem que a coluna dizia (A2, E2, A4)."],
+  "estados": ["Estados com um significado só", "\"Precisa de revisão\" servia para coisas diferentes. \"Calculado\" juntava provisão e memória pronta (e até processo sem cálculo).", "\"Precisa de você\" (sempre com o motivo), \"Provisão feita\" e \"Pronto para aprovar\". As cores de status continuam as do sistema.", "\"Precisa de revisão\" aparecia com \"nada para revisar\", e \"Calculado\" aparecia em processo sem cálculo (A2, A5, Q4, Q6)."],
+  "proc-cliente-topo": ["Cliente e tipo de valor no topo", "A cliente só aparecia como aviso de erro (\"cliente não identificada\").", "Selos da cliente (ou \"Cliente a indicar\") e do tipo de valor, logo abaixo do título.", "A cliente só aparecia quando dava erro; quem abria o processo não sabia logo para quem estava trabalhando (A3)."],
+  "proc-mais-acoes": ["Ações de efeito grande no menu", "\"Arquivar\" ficava solto no topo, sem confirmação. \"Reler os autos\" e \"Reprocessar\" ficavam lado a lado, sem explicação.", "\"Mais ações\" com explicação e confirmação. \"Reprocessar\" saiu (era apoio de desenvolvimento, segundo o vídeo).", "\"Arquivar\" ficava ao alcance de um clique, sem confirmação, e \"Reprocessar\" era uma ferramenta de desenvolvimento (N8; vídeo do time, 12:24)."],
+  "proc-jornada": ["Jornada fixa e clicável", "8 passos num processo, 9 em outro, em ordem diferente da do guia. Clicar num passo não fazia nada.", "Sempre os 8 passos do guia, na ordem do guia. Cada passo leva à aba onde ele se resolve. Na provisão, os passos depois da conferência ficam com cadeado.", "A jornada mudava de forma entre processos e parecia clicável, mas não levava a lugar nenhum (B1, B2, B3, Q5)."],
+  "proc-agora": ["\"Agora\": um próximo passo só", "A mesma tela dizia \"aprove\", \"aprove mesmo assim\", \"ainda não dá para aprovar\" e \"aguardando liquidação\".", "Um bloco diz se é a vez de uma pessoa, do sistema ou se está aguardando os autos, com uma ação, o porquê e um botão. Ele se atualiza quando as pendências são resolvidas.", "Na mesma tela havia ordens contraditórias (\"aprove\" e \"não dá para aprovar\"), e as personas não sabiam o que fazer (A1, Q3)."],
+  "proc-comquem": ["Com quem está, de verdade", "\"Quem trabalha: Sua equipe\".", "Nome, papel, desde quando e \"Passar para outra pessoa\".", "\"Sua equipe\" não dizia qual pessoa nem qual papel (A4)."],
+  "proc-contadores": ["Abas com contador de pendência", "Nada indicava em qual aba estava o problema.", "\"Cálculo 2\", \"Documentos 1\": o número mostra onde agir.", "Nada mostrava em que aba estava o problema; a pessoa abria aba por aba (C1)."],
+  "visao-partes": ["Indicar a cliente nas partes", "As partes eram só leitura, com termos trabalhistas (reclamante e reclamada) em processo cível. Não havia onde dizer qual ré é a cliente.", "Autor e ré, selo \"Cliente\" e o botão \"Marcar como cliente\".", "O sistema bloqueava a aprovação por \"cliente não identificada\", mas não havia onde dizer qual ré era a cliente: a tarefa era impossível (Q2)."],
+  "calc-para-aprovar": ["Cálculo começa pelo que falta", "A ordem era evolução por fase → aviso → totais → pontos → verbas. Para descobrir que a conta deu zero, era preciso rolar a página.", "\"Para aprovar\" vem primeiro, como checklist, e cada item se resolve ali mesmo.", "Para descobrir que a conta tinha dado zero, era preciso rolar a página; o que pedia ação ficava no meio (C1, A3)."],
+  "calc-cliente": ["Escolher a cliente entre as rés", "O aviso \"Cliente nao identificada\" não era clicável e não tinha saída.", "Opções com as rés, sugestão (\"é cliente em 8 outros processos\") e \"nenhuma é cliente\".", "O aviso não era clicável e não tinha saída; o processo ficava parado (Q1, Q2)."],
+  "calc-zero": ["Conta zero com motivo e saída", "\"A conta deu zero. Confira a leitura da sentença\", sem link.", "O motivo vem com as folhas (acordo da TAP, alvará pago) e as escolhas \"encerrar sem valor\" ou \"informar valor e de onde veio\".", "O processo terminou em acordo com outra ré e já foi pago; o zero estava certo, mas a tela só oferecia \"aprove mesmo assim\" (A3, Q1; vídeo do time, 29:21)."],
+  "calc-aprovar": ["Aprovar só quando der, e dizendo por quê", "O botão vinha desligado ao lado de \"aprove mesmo assim\".", "Desligado com a explicação. Libera quando tudo se resolve e confirma o que congela. Se a decisão foi encerrar sem valor, vira \"Aprovar e encerrar sem valor\".", "O botão aparecia desligado ao lado de um texto mandando aprovar (A1)."],
+  "calc-provisao": ["Provisão sem \"base para a guia\"", "A provisão mostrava \"Total final: base para a guia de pagamento\".", "\"Estimativa total (não gera guia)\". A data da citação pode ser informada no próprio item, com a fonte.", "A estimativa aparecia como \"base para a guia de pagamento\", o que ela não é (C2, Q6)."],
+  "calc-verbas": ["Verbas com detalhe sob demanda", "Toda a conta mês a mês aparecia aberta (\"informação demais\", segundo o vídeo).", "Origem, correção e juros visíveis; o mês a mês fica recolhido. Aguenta o volume de verbas do trabalhista.", "O próprio time achou que o mês a mês aberto era \"informação demais\", e no trabalhista as verbas são muitas (C3; vídeo do time, 20:42)."],
+  "folha-lado": ["Folha dos autos ao lado", "\"Abrir documento\" baixava o PDF inteiro. O trecho que provava a data não mostrava data nenhuma.", "Cada \"fl. N\" abre a folha num painel ao lado, com o trecho marcado. Baixar o PDF fica como segunda opção.", "Para conferir a origem de um número, era preciso baixar o PDF inteiro e sair do sistema; e o trecho citado como prova da data não mostrava data (G, Q7)."],
+  "chat-perguntar": ["Chat de perguntas: privado e ao lado", "A gaveta cobria cerca de 60% da tela e era igual à do outro chat. Não dizia que a conversa é privada.", "Painel ao lado, sem cobrir a conta, com o aviso \"Só você vê esta conversa. Nada do processo muda.\"", "Os dois chats pareciam iguais e cobriam a tela; ninguém sabia que este é privado (D1, D2; vídeo do time, 22:10)."],
+  "chat-calculo": ["Chat do cálculo: visível à equipe", "Não dizia que a conversa é vista por todos, e a gaveta escondia a conta que ele altera.", "Aviso \"Visível para toda a equipe\". O era → ficou aparece ao lado da memória, com confirmação que gera uma versão nova.", "Este chat altera a conta e é visto por toda a equipe, mas a tela não dizia isso (D1, D2; vídeo do time, 18:08)."],
+  "docs-falta": ["\"Faltam documentos\" diz qual", "\"Envie os documentos que faltam\", sem dizer quais.", "Checklist do que falta (com a folha da sentença e onde o documento costuma estar) e do que já está ok.", "As personas liam \"faltam documentos\" e não sabiam qual documento mandar (N5)."],
+  "docs-linguagem": ["Sem linguagem técnica", "\"O progresso por parte do documento ainda não é informado pela API\".", "Nome legível do documento, quem enviou, quando e se já foi lido.", "A tela falava da tecnologia (\"API\"), contra o próprio princípio do sistema (F)."],
+  "tl-duvidas": ["\"Dúvidas da leitura\" no lugar de \"Revisões\"", "\"Revisões\" dizia \"nada a revisar\" enquanto o status dizia \"Precisa de revisão\".", "O nome separa as dúvidas da leitura dos pontos da conta, e aponta onde estão os da conta.", "A palavra \"revisão\" tinha dois sentidos, e a aba dizia \"nada a revisar\" quando o status dizia o contrário (A2, Q4)."],
+  "tl-folha": ["Cada ato com a folha clicável", "A origem ficava escondida atrás de \"Ver o texto e onde está nos autos\".", "A folha aparece em cada ato e abre ao lado.", "Todo número deve mostrar de onde veio, mas a folha ficava escondida (G)."],
+  "hist-nomes": ["Histórico com nomes", "\"Pessoa #2\", \"phase_snapshots\", \"calculate\".", "Nome das pessoas e frases. As tarefas técnicas ficam recolhidas para o suporte.", "O histórico mostrava códigos internos e \"Pessoa #2\" no lugar do nome (F)."],
+  "up-topo": ["Pendência antes da área de envio", "A primeira tela era só a área de arrastar arquivos. Com zoom de 200%, a pendência ficava escondida.", "\"Aguardando sua escolha\" vem primeiro.", "Com zoom de 200%, a pendência ficava fora da tela (N7)."],
+  "up-sugestao": ["Prévia e sugestão de processo", "Sem prévia. A única opção era digitar o número CNJ, e o campo ignorava letras sem avisar.", "Prévia do documento, sugestão com o motivo (\"o nome aparece no texto\") e busca por número ou nome, com mensagem de ajuda.", "Sem ver o arquivo e sem o número, a estagiária desistia; para o leitor de tela, a opção se chamava \"__other__\" (N4, N8)."],
+  "up-resolvidos": ["Resolvidos em tabela com filtro", "Lista corrida de 31 arquivos com nomes técnicos.", "Tabela com filtro, nome legível e o processo de destino.", "A lista corrida de 31 arquivos com nomes técnicos confundia quem tem dificuldade de foco (E3)."],
+  "glossario": ["Termos explicados", "\"Memória de cálculo\", \"data de referência\", \"parte da cliente\" e \"provisão\" apareciam sem explicação.", "Os termos têm um sublinhado pontilhado: ao passar o mouse, tocar ou chegar pelo teclado, aparece a explicação do glossário do próprio guia.", "Na rodada 2, o advogado recém-chegado e a estagiária travaram no vocabulário (R2)."],
+  "mobile-barra": ["Ação fixa no celular", "O botão de aprovar ficava cerca de 1.700 px abaixo do topo; a jornada cortava a etapa atual.", "A ação principal fica fixa embaixo e a jornada rola até a etapa atual.", "No celular, o botão de aprovar ficava a mais de duas telas de rolagem (N6)."],
+};
+</script>
+<script>/* Casca do protótipo: menu, topo, tema, busca Ctrl+K, painel lateral, diálogos. */
+(function () {
+  const D = window.DATA;
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const money = (v) => v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const proc = (id) => D.procs.find((p) => p.id === Number(id));
+  const badge = (estado) => { const s = D.STATES[estado]; return `<span class="badge ${s.outline ? "outline" : ""}" style="--c:${s.c}">${s.label}</span>`; };
+  const person = (key, sm = true) => { const t = D.TEAM[key]; return key === "sistema"
+      ? `<span class="avatar ${sm ? "sm" : ""} sys" aria-hidden="true"><i data-lucide="cpu"></i></span>`
+      : `<span class="avatar ${sm ? "sm" : ""}" aria-hidden="true">${t.ini}</span>`; };
+  const valueTag = (p) => p.tipo === "prov" ? `<span class="tag">Provisão</span>` : p.tipo === "cond" ? `<span class="tag client">Condenação</span>` : `<span class="tag">Sem valor ainda</span>`;
+  const clientTag = (p) => p.cliente ? `<span class="tag client"><i data-lucide="briefcase"></i>${esc(p.cliente)}</span>` : `<span class="tag" style="color:var(--state-needs_review)"><i data-lucide="circle-help"></i>Cliente a indicar</span>`;
+  const icons = () => window.lucide && window.lucide.createIcons();
+
+  const myQueue = () => D.procs.filter((p) => ["needs_review", "needs_documents", "calculated"].includes(p.estado));
+
+  function shell(active) {
+    const pend = D.UPLOADS_PENDENTES.length;
+    const fila = myQueue().length + pend;
+    const nav = [
+      ["index.html", "gauge", "Painel", fila],
+      ["processos.html", "folder", "Processos"],
+      ["uploads.html", "inbox", "Uploads", pend],
+      ["#", "percent", "Índices"],
+      ["#", "shield", "Administração"],
+      ["#", "scroll-text", "Auditoria"],
+    ];
+    const app = document.createElement("div");
+    app.className = "app";
+    app.innerHTML = `
+      <a class="skip" href="#conteudo">Ir para o conteúdo</a>
+      <aside class="sidebar" id="sidebar" aria-label="Menu principal">
+        <div class="brand"><span class="logo">C</span>Contencioso</div>
+        <nav class="nav">${nav.map(([h, ic, t, n]) => `<a href="${h}" class="${t === active ? "active" : ""}" ${t === active ? 'aria-current="page"' : ""}><i data-lucide="${ic}"></i>${t}${n ? `<span class="count" aria-label="${n} pendentes">${n}</span>` : ""}</a>`).join("")}</nav>
+        <div style="padding:0 8px">${chg("menu-contador", "Mudou: contadores")}</div>
+        <div class="foot"></div>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <button class="icon-btn menu-btn" aria-label="Abrir menu" onclick="document.getElementById('sidebar').classList.toggle('open')"><i data-lucide="menu"></i></button>
+          <button class="search-btn" id="openSearch" aria-label="Buscar processo, cliente ou tela (Ctrl+K)"><i data-lucide="search"></i><span>Buscar processo, cliente ou tela…</span><kbd>Ctrl K</kbd></button>${chg("busca-rapida")}
+          <span class="spacer"></span>
+          <button class="chg-toggle" id="chgToggle" aria-pressed="true" title="Mostrar ou esconder as etiquetas do que mudou"><i data-lucide="sparkles"></i><span>O que mudou</span></button>
+          <button class="icon-btn" id="chgList" aria-label="Ver a lista de mudanças desta tela"><i data-lucide="list-checks"></i></button>
+          <button class="icon-btn" id="themeBtn" aria-label="Alternar tema"><i data-lucide="monitor"></i></button>
+          <button class="user" aria-label="Menu de Mariana"><span class="avatar">M</span><span class="nm">Mariana</span></button>
+        </header>
+        <main class="content" id="conteudo" tabindex="-1"><div class="chg-banner" id="chgBanner"><i data-lucide="sparkles" style="color:var(--note)"></i><span><b>Protótipo do redesenho.</b> As etiquetas <span class="chg" style="display:inline-flex;cursor:default"><i data-lucide="sparkles"></i>Mudou</span> marcam o que mudou na experiência: clique para ver o antes, o agora e o porquê. Use <b>O que mudou</b>, no topo, para esconder.</span></div></main>
+      </div>
+      <aside class="side" id="side" hidden role="region" aria-label="Painel lateral"></aside>
+      <div class="term-pop" id="termPop" role="tooltip" hidden></div>
+      <div class="overlay" id="pal" hidden><div class="palette" role="dialog" aria-label="Busca rápida">
+        <div class="in-wrap"><i data-lucide="search"></i><input id="palIn" placeholder="Número, parte, cliente ou tela" aria-label="Buscar"></div>
+        <div class="res" id="palRes" role="listbox"></div></div></div>
+      <div class="overlay" id="dlg" hidden></div>
+      <div class="toast" id="toast" role="status" hidden></div>`;
+    document.body.prepend(app);
+    const main = $("#conteudo");
+    $$("body > template, body > .page-content").forEach((n) => main.append(n.content ? n.content.cloneNode(true) : n));
+    $$("[data-c]", main).forEach((el) => (el.outerHTML = chg(el.dataset.c, el.dataset.l || "Mudou")));
+    bindTheme(); bindPalette(); bindChanges(); bindTerms();
+    return main;
+  }
+
+  /* Etiquetas "O que mudou" */
+  const chg = (key, label = "Mudou") => window.CHANGES && window.CHANGES[key]
+    ? `<button type="button" class="chg" data-chg="${key}" aria-label="O que mudou: ${esc(window.CHANGES[key][0])}"><i data-lucide="sparkles"></i>${esc(label)}</button>` : "";
+  function bindChanges() {
+    let on = localStorageGet("chg") !== "off";
+    const apply = () => { document.body.classList.toggle("show-chg", on); $("#chgToggle").setAttribute("aria-pressed", on); $("#chgBanner").hidden = !on; };
+    $("#chgToggle").onclick = () => { on = !on; localStorageSet("chg", on ? "on" : "off"); apply(); };
+    apply();
+    const pop = document.createElement("div"); pop.className = "chg-pop"; pop.hidden = true; pop.setAttribute("role", "dialog"); document.body.append(pop);
+    document.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-chg]");
+      if (!b) { if (!e.target.closest(".chg-pop")) pop.hidden = true; return; }
+      e.preventDefault(); e.stopPropagation();
+      const [t, antes, agora, pq] = window.CHANGES[b.dataset.chg];
+      pop.innerHTML = `<h3><i data-lucide="sparkles"></i>${esc(t)}</h3><dl><div><dt>Antes</dt><dd class="antes">${esc(antes)}</dd></div><div><dt>Agora</dt><dd>${esc(agora)}</dd></div><div><dt>Por quê</dt><dd class="muted">${esc(pq)}</dd></div></dl>`;
+      pop.hidden = false; icons();
+      const r = b.getBoundingClientRect(); const w = pop.offsetWidth;
+      pop.style.top = (r.bottom + scrollY + 6) + "px";
+      pop.style.left = Math.max(8, Math.min(r.left + scrollX, scrollX + innerWidth - w - 8)) + "px";
+    }, true);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") pop.hidden = true; });
+    $("#chgList").onclick = () => {
+      const keys = [...new Set($$("[data-chg]").map((b) => b.dataset.chg))];
+      openSide(`<div class="side-h"><i data-lucide="list-checks" style="color:var(--note)"></i><h2 style="flex:1">O que mudou nesta tela · ${keys.length}</h2><button class="icon-btn" data-close aria-label="Fechar"><i data-lucide="x"></i></button></div>
+        <div class="side-b chg-list">${keys.map((k) => { const [t, antes, agora, pq] = window.CHANGES[k]; return `<a href="#" data-goto="${k}"><b>${esc(t)}</b><div class="help" style="margin-top:4px"><span class="antes">Antes: ${esc(antes)}</span></div><div style="margin-top:4px;font-size:13px">Agora: ${esc(agora)}</div><div class="help" style="margin-top:4px">${esc(pq)}</div></a>`; }).join("")}</div>`);
+      $$("[data-goto]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); const t = $(`.main [data-chg="${a.dataset.goto}"]`) || $(`[data-chg="${a.dataset.goto}"]`); if (!t) return; t.scrollIntoView({ block: "center" }); const host = t.parentElement; host.classList.add("chg-target"); setTimeout(() => host.classList.remove("chg-target"), 1800); }));
+    };
+  }
+
+  function bindTheme() {
+    const order = ["system", "dark", "light"]; const ic = { system: "monitor", dark: "moon", light: "sun" };
+    let cur = localStorageGet("theme") || "system";
+    const apply = () => { if (cur === "system") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = cur;
+      $("#themeBtn").innerHTML = `<i data-lucide="${ic[cur]}"></i>`; $("#themeBtn").setAttribute("aria-label", `Tema: ${({ system: "do sistema", dark: "escuro", light: "claro" })[cur]}. Alternar`); icons(); };
+    $("#themeBtn").onclick = () => { cur = order[(order.indexOf(cur) + 1) % 3]; localStorageSet("theme", cur); apply(); };
+    apply();
+  }
+  function localStorageGet(k) { try { return localStorage.getItem("ctv2-" + k); } catch (e) { return null; } }
+  function localStorageSet(k, v) { try { localStorage.setItem("ctv2-" + k, v); } catch (e) {} }
+
+  /* Busca rápida: agora encontra processo por número, parte ou cliente (antes só levava às telas). */
+  function bindPalette() {
+    const pal = $("#pal"), inp = $("#palIn"), res = $("#palRes");
+    const screens = [["Painel", "index.html", "gauge"], ["Processos", "processos.html", "folder"], ["Uploads", "uploads.html", "inbox"], ["Índices", "#", "percent"], ["Minha conta", "#", "user"]];
+    const norm = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const render = () => {
+      const q = norm(inp.value);
+      let html = "";
+      if (q) {
+        const clients = D.CLIENT_NAMES.filter((c) => norm(c).includes(q) || D.procs.some((p) => p.sugestao === c && norm(p.reus).includes(q)));
+        const ps = D.procs.filter((p) => norm(p.numero).includes(q) || norm(p.titulo).includes(q) || norm(p.cliente || "").includes(q)).slice(0, 8);
+        if (clients.length) html += `<div class="grp">Clientes</div>` + clients.map((c) => `<a href="processos.html?cliente=${encodeURIComponent(c)}"><i data-lucide="briefcase"></i>${esc(c)}<span class="subtle" style="margin-left:auto">${D.procs.filter((p) => p.sugestao === c).length} processos</span></a>`).join("");
+        if (ps.length) html += `<div class="grp">Processos</div>` + ps.map((p) => `<a href="processo.html?id=${p.id}"><span class="mono" style="font-size:12px">${p.numero}</span><span class="muted" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.autor)}</span><span style="margin-left:auto">${badge(p.estado)}</span></a>`).join("");
+      }
+      const sc = screens.filter(([t]) => !q || norm(t).includes(q));
+      if (sc.length) html += `<div class="grp">Ir para</div>` + sc.map(([t, h, ic]) => `<a href="${h}"><i data-lucide="${ic}"></i>${t}</a>`).join("");
+      res.innerHTML = html || `<div class="empty">Nada com "${esc(inp.value)}". Tente o número do processo (pode ser só um pedaço), o nome de uma parte ou da cliente.</div>`;
+      const first = $("a", res); if (first) first.setAttribute("aria-selected", "true");
+      icons();
+    };
+    const open = () => { pal.hidden = false; inp.value = ""; render(); inp.focus(); };
+    $("#openSearch").onclick = open;
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); open(); }
+      if (e.key === "Escape") { if (!$("#dlg").hidden) closeDialog(); else if (!pal.hidden) pal.hidden = true; else if (!$("#side").hidden && !document.querySelector(".chg-pop:not([hidden])")) closeSide(); }
+    });
+    pal.addEventListener("click", (e) => { if (e.target === pal) pal.hidden = true; });
+    inp.addEventListener("input", render);
+    inp.addEventListener("keydown", (e) => {
+      const items = $$("a", res); let i = items.findIndex((a) => a.getAttribute("aria-selected") === "true");
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); items[i]?.removeAttribute("aria-selected"); i = (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length; items[i].setAttribute("aria-selected", "true"); items[i].scrollIntoView({ block: "nearest" }); }
+      if (e.key === "Enter" && items[i]) window.go(items[i].getAttribute("href"));
+    });
+  }
+
+  /* Painel lateral: empurra o conteúdo em vez de cobrir (os chats e a folha ficam ao lado da conta). */
+  let sideOpener = null;
+  /* R1: ao abrir, o foco vai para o painel; Esc fecha e devolve o foco a quem abriu. */
+  function openSide(html) { const s = $("#side"); if (s.hidden) sideOpener = document.activeElement; s.innerHTML = html; s.hidden = false; $(".app").classList.add("with-panel"); icons();
+    $("[data-close]", s)?.addEventListener("click", closeSide);
+    const h = $("h2", s); if (h) { s.setAttribute("aria-label", h.textContent.trim()); h.tabIndex = -1; h.focus({ preventScroll: true }); } }
+  function closeSide() { const s = $("#side"); s.hidden = true; s.innerHTML = ""; $(".app").classList.remove("with-panel"); if (sideOpener && document.contains(sideOpener)) sideOpener.focus({ preventScroll: true }); sideOpener = null; }
+
+  /* R2: termos do sistema com explicação curta (glossário do guia do cliente). */
+  const GLOSS = {
+    memoria: ["Memória de cálculo", "A conta de quanto a cliente deve, item a item, com correção e juros mês a mês. Cada mudança gera uma versão nova."],
+    provisao: ["Provisão", "Estimativa feita antes da sentença, a partir dos pedidos. Serve para planejar; não é aprovada e não gera guia."],
+    dataref: ["Data de referência", "A data até a qual a conta é atualizada. O ideal é a data em que o valor será pago."],
+    parte: ["Parte da cliente", "Quanto do total cabe à cliente quando há outras empresas condenadas junto."],
+    verba: ["Verba", "Cada item da condenação, como danos morais, custas ou honorários."],
+    guia: ["Guia", "O boleto judicial para pagar o valor aprovado."],
+    total: ["Total devido", "A soma de todas as verbas, corrigidas e com juros até a data de referência."],
+  };
+  const term = (label, key) => GLOSS[key] ? `<span class="term" tabindex="0" data-term="${key}" aria-describedby="termPop">${esc(label)}</span>` : esc(label);
+  function bindTerms() {
+    const pop = $("#termPop");
+    const show = (el) => { const [t, d] = GLOSS[el.dataset.term]; pop.innerHTML = `<b>${esc(t)}</b><br>${esc(d)}`; pop.hidden = false;
+      const r = el.getBoundingClientRect(); pop.style.top = (r.bottom + scrollY + 6) + "px"; pop.style.left = Math.max(8, Math.min(r.left + scrollX, scrollX + innerWidth - pop.offsetWidth - 8)) + "px"; };
+    const hide = () => (pop.hidden = true);
+    document.addEventListener("mouseover", (e) => { const t = e.target.closest("[data-term]"); if (t) show(t); });
+    document.addEventListener("mouseout", (e) => { if (e.target.closest("[data-term]")) hide(); });
+    document.addEventListener("focusin", (e) => { const t = e.target.closest("[data-term]"); t ? show(t) : hide(); });
+    document.addEventListener("click", (e) => { const t = e.target.closest("[data-term]"); t ? show(t) : hide(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
+  }
+
+  function confirmDialog({ title, body, ok = "Confirmar", danger = false, onOk }) {
+    const d = $("#dlg");
+    d.innerHTML = `<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlgT"><h2 id="dlgT">${title}</h2><div>${body}</div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn" data-x>Cancelar</button><button class="btn ${danger ? "danger" : "primary"}" data-ok>${ok}</button></div></div>`;
+    d.hidden = false; icons();
+    $("[data-x]", d).onclick = closeDialog; $("[data-ok]", d).onclick = () => { closeDialog(); onOk && onOk(); };
+    $("[data-ok]", d).focus();
+  }
+  function closeDialog() { const d = $("#dlg"); if (d) { d.hidden = true; d.innerHTML = ""; } }
+  function toast(t) { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => (el.hidden = true), 3200); }
+
+  window.UI = { chg, term, $, $$, esc, money, proc, badge, person, valueTag, clientTag, icons, shell, openSide, closeSide, confirmDialog, toast, myQueue, D };
+})();
+</script>
+<script>
+(function () {
+  const raw = decodeURIComponent(location.hash.replace(/^#\/?/, "")) || "index.html";
+  let [path, rest = ""] = raw.split("?");
+  if (!window.PAGES[path]) path = "index.html";
+  const [qs, anchor = ""] = rest.split("#");
+  window.QS = qs ? "?" + qs : "";
+  window.ANCHOR = anchor ? "#" + anchor : "";
+  window.CUR_PAGE = path;
+  window.go = function (href) {
+    const target = href.startsWith("?") ? path + href : href;
+    location.hash = "/" + target;
+  };
+  // links entre as telas viram rotas dentro deste arquivo; âncoras rolam sem trocar a rota
+  document.addEventListener("click", function (e) {
+    const a = e.target.closest && e.target.closest("a[href]");
+    if (!a || e.defaultPrevented) return;
+    const h = a.getAttribute("href");
+    if (/^(index|processos|processo|uploads)\.html/.test(h) || h.startsWith("?")) { e.preventDefault(); window.go(h); }
+    else if (h === "#") e.preventDefault();
+    else if (h.startsWith("#")) { e.preventDefault(); const t = document.querySelector(h); if (t) { t.scrollIntoView({ block: "start" }); if (t.tabIndex < 0 && !t.hasAttribute("tabindex")) t.tabIndex = -1; t.focus({ preventScroll: true }); } }
+  }, true);
+  // voltar, avançar ou editar o endereço troca a tela
+  window.addEventListener("hashchange", function () { location.reload(); });
+  try { history.scrollRestoration = "manual"; } catch (e) {}
+  const P = window.PAGES[path];
+  document.title = P.title + " · protótipo";
+  const t = document.createElement("template"); t.innerHTML = P.tpl; document.body.prepend(t);
+  const s = document.createElement("script"); s.textContent = P.js; document.body.append(s);
+  if (window.ANCHOR) setTimeout(function () { const el = document.querySelector(window.ANCHOR); if (el) el.scrollIntoView({ block: "start" }); }, 80);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel · Contencioso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<template>
+  <div class="proto-note"><i data-lucide="flask-conical"></i>Protótipo do redesenho · números de processo e tribunais do staging de 16/11/2026; nomes de pessoas fictícios; motivos, responsáveis e valores ilustrativos.</div>
+  <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div><h1>Olá, Mariana</h1><p class="muted" id="sub" style="margin:4px 0 0"></p></div>
+    <label class="field" style="flex-direction:row;align-items:center;gap:8px">Ver a fila de
+      <select class="select" id="role" aria-label="Ver a fila de qual papel">
+        <option value="helena">Aprovação (Helena Duarte)</option>
+        <option value="rafael">Conferência (Rafael Moura)</option>
+        <option value="thiago">Conferência (Thiago Lopes)</option>
+        <option value="bruna">Entrada de documentos (Bruna Martins)</option>
+        <option value="todos">Toda a equipe</option>
+      </select></label>
+  </div>
+
+  <nav class="quicknav" aria-label="Atalhos do Painel"><a href="#qT">Sua fila</a><a href="#eT">Com quem está</a><a href="#cT">Carteira por cliente</a><a href="#jT">Jornada</a></nav>
+  <section class="card" style="margin-top:20px" aria-labelledby="qT">
+    <div class="card-h"><div><h2 id="qT">O que espera por você <span data-c="painel-fila"></span></h2><p>Cada item diz o motivo e leva direto ao lugar de resolver.</p></div><span class="spacer" style="flex:1"></span><span class="money big" id="qN"></span></div>
+    <div id="queue" style="margin-top:12px"></div>
+  </section>
+
+  <div class="grid2" style="margin-top:16px">
+    <section class="card" aria-labelledby="eT">
+      <div class="card-h"><div><h2 id="eT">Com quem está cada processo <span data-c="painel-comquem"></span></h2><p>Quem precisa agir e quantos processos estão com cada pessoa.</p></div></div>
+      <div class="card-b" id="team"></div>
+    </section>
+    <section class="card" aria-labelledby="cT">
+      <div class="card-h"><div><h2 id="cT">Carteira por cliente <span data-c="painel-carteira" data-l="Novo"></span></h2><p>Provisão (estimativa antes da sentença) separada da condenação.</p></div></div>
+      <div class="card-b" style="padding-top:8px"><div class="table-wrap" style="border:0"><table class="responsive" id="carteira"></table></div></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:16px" aria-labelledby="jT">
+    <div class="card-h"><div><h2 id="jT">Jornada dos processos <span data-c="painel-funil"></span></h2><p>Quantos processos há em cada etapa. Clique para ver a lista.</p></div><span style="flex:1"></span><a class="btn" href="processos.html">Ver todos <i data-lucide="arrow-right"></i></a></div>
+    <div class="card-b"><div class="funnel" id="funnel"></div><div class="legend" id="legend"></div></div>
+  </section>
+</template>
+<script src="assets/data.js"></script>
+<script src="assets/changes.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const { $, esc, money, badge, person, valueTag, clientTag, icons, shell, myQueue, D } = UI;
+shell("Painel");
+const ACTION = { needs_review: ["Resolver", "wrench"], needs_documents: ["Enviar documento", "upload"], calculated: ["Conferir e aprovar", "badge-check"] };
+const TAB = { needs_review: "calculo", needs_documents: "documentos", calculated: "calculo" };
+function item(p) {
+  const [lbl, ic] = ACTION[p.estado];
+  return `<div class="queue-item">
+    ${person(p.resp, false)}
+    <div style="min-width:0"><div class="t"><a href="processo.html?id=${p.id}"><span class="mono">${p.numero}</span></a> · <span class="muted" style="font-weight:400">${esc(p.autor)}</span></div>
+      <div class="r">${esc(p.motivo)}</div>
+      <div class="meta">${badge(p.estado)} ${clientTag(p)} ${valueTag(p)} ${p.valor != null && p.tipo !== "none" ? `<span class="money">${money(p.valor)}</span>` : ""} <span>· ${D.TEAM[p.resp].nome}, ${p.data.slice(0, 5)}</span></div></div>
+    <a class="btn ${p.estado === "calculated" ? "primary" : ""}" href="processo.html?id=${p.id}&aba=${TAB[p.estado]}"><i data-lucide="${ic}"></i>${lbl}</a></div>`;
+}
+function uploadItem(u) {
+  return `<div class="queue-item">${person(u.por, false)}
+    <div><div class="t">Arquivo sem processo ${UI.chg("painel-upload")} · <span class="muted" style="font-weight:400">${esc(u.nome)}</span></div>
+    <div class="r">O sistema não achou o número do processo no texto. Sugestão: Camila Rezende Porto (4035231-09).</div>
+    <div class="meta"><span class="badge" style="--c:var(--state-needs_documents)">Aguardando sua escolha</span><span>· enviado por ${D.TEAM[u.por].nome}, ${u.enviado.slice(0, 5)}</span></div></div>
+    <a class="btn" href="uploads.html"><i data-lucide="link"></i>Escolher processo</a></div>`;
+}
+function render() {
+  const role = $("#role").value;
+  const q = myQueue().filter((p) => role === "todos" || p.resp === role).sort((a, b) => (a.estado === "calculated" ? -1 : 1) - (b.estado === "calculated" ? -1 : 1) || b.sort.localeCompare(a.sort));
+  const ups = role === "bruna" || role === "todos" ? D.UPLOADS_PENDENTES : [];
+  $("#queue").innerHTML = (ups.map(uploadItem).join("") + q.map(item).join("")) || `<div class="card-b muted">Nada esperando por você agora.</div>`;
+  $("#qN").textContent = q.length + ups.length;
+  const apr = myQueue().filter((p) => p.estado === "calculated").length;
+  $("#sub").textContent = role === "helena" ? `${apr} memórias conferidas aguardam sua aprovação · 1 prazo vence em 20/11` : `${q.length + ups.length} itens nesta fila`;
+  icons();
+}
+// com quem está
+const groups = {};
+D.procs.forEach((p) => { (groups[p.resp] ||= []).push(p); });
+$("#team").innerHTML = Object.entries(groups).sort((a, b) => b[1].length - a[1].length).map(([k, ps]) => {
+  const t = D.TEAM[k];
+  const why = k === "sistema" ? "Provisões feitas, aguardando a sentença chegar aos autos" : [...new Set(ps.map((p) => D.STATES[p.estado].label))].join(" · ");
+  return `<div class="row" style="padding:10px 0;border-top:1px solid var(--border)">${person(k, false)}<div style="flex:1;min-width:0"><b>${t.nome}</b> <span class="subtle">· ${t.papel}</span><div class="help">${why}</div></div><span class="money">${ps.length}</span></div>`;
+}).join("").replace('border-top:1px solid var(--border)', '');
+// carteira por cliente
+const byC = {};
+D.procs.forEach((p) => { const c = p.cliente || p.sugestao || "Sem cliente"; const o = (byC[c] ||= { n: 0, prov: 0, cond: 0, conf: 0 }); o.n++; if (!p.cliente) o.conf++; if (p.tipo === "prov") o.prov += p.valor || 0; if (p.tipo === "cond") o.cond += p.valor || 0; });
+$("#carteira").innerHTML = `<thead><tr><th>Cliente</th><th class="num">Processos</th><th class="num">Provisão</th><th class="num">Condenação</th></tr></thead><tbody>` +
+  Object.entries(byC).sort((a, b) => b[1].n - a[1].n).map(([c, o]) => `<tr><td data-l="Cliente"><a class="link" href="processos.html?cliente=${encodeURIComponent(c)}">${esc(c === "Sem cliente" ? "Título e cliente não identificados" : c)}</a>${o.conf && c !== "Sem cliente" ? `<div class="help" style="color:var(--state-needs_review)">${o.conf} com a cliente a confirmar</div>` : ""}</td><td class="num" data-l="Processos">${o.n}</td><td class="num money" data-l="Provisão"><a class="link" href="processos.html?cliente=${encodeURIComponent(c)}&valor=prov" aria-label="Ver as provisões de ${esc(c)}">${money(o.prov)}</a></td><td class="num money" data-l="Condenação"><a class="link" href="processos.html?cliente=${encodeURIComponent(c)}&valor=cond" aria-label="Ver as condenações de ${esc(c)}">${money(o.cond)}</a></td></tr>`).join("") + `</tbody>`;
+// funil compacto
+const order = ["needs_documents", "processing", "needs_review", "provision", "calculated", "approved"];
+const cnt = (s) => D.procs.filter((p) => p.estado === s).length;
+$("#funnel").innerHTML = order.filter(cnt).map((s) => `<span style="flex:${cnt(s)};background:${D.STATES[s].c}" title="${D.STATES[s].label}: ${cnt(s)}"></span>`).join("");
+$("#legend").innerHTML = order.map((s) => `<a href="processos.html?estado=${s}"><i style="background:${D.STATES[s].c}"></i>${D.STATES[s].label} <b>${cnt(s)}</b></a>`).join("") + `<a href="#"><i style="background:var(--state-guide_requested)"></i>Guia pedida <b>0</b></a><a href="#"><i style="background:var(--state-paid)"></i>Pago <b>0</b></a>`;
+$("#role").onchange = render; render();
+</script>
+</body>
+</html>

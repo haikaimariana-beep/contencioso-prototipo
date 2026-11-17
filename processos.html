@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Processos · Contencioso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<template>
+  <div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <h1>Processos</h1>
+    <div class="row"><button class="btn" id="csv"><i data-lucide="download"></i>Exportar CSV</button><a class="btn primary" href="uploads.html"><i data-lucide="upload"></i>Enviar documentos</a></div>
+  </div>
+  <div class="row" style="margin-top:20px;flex-wrap:wrap;gap:12px">
+    <label class="sr-only" for="q">Buscar processos</label>
+    <div style="position:relative;flex:1;min-width:260px;max-width:440px"><i data-lucide="search" style="position:absolute;left:10px;top:10px;color:var(--fg-subtle)"></i>
+      <input class="input" id="q" type="search" placeholder="Número (pode ser só um pedaço), parte ou cliente" style="width:100%;padding-left:34px"></div><span data-c="lista-busca"></span>
+    <label class="field" style="flex-direction:row;align-items:center;gap:8px">Cliente
+      <select class="select" id="cliente"><option value="">Todas</option></select></label><span data-c="lista-cliente" data-l="Novo"></span>
+  </div>
+  <div class="stack" style="gap:10px;margin-top:14px">
+    <div class="row" style="flex-wrap:wrap;gap:8px"><span class="help" style="width:52px">Situação</span><span data-c="estados"></span><div id="fEstado" class="row" style="flex-wrap:wrap;gap:6px"></div></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><span class="help" style="width:52px">Valor</span><span data-c="lista-valor" data-l="Novo"></span><div id="fValor" class="row" style="flex-wrap:wrap;gap:6px"></div></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><span class="help" style="width:52px">Fase</span><div id="fFase" class="row" style="flex-wrap:wrap;gap:6px"></div></div>
+  </div>
+  <p class="help" id="hint" style="margin:14px 0 8px"></p>
+  <div class="table-wrap"><table class="responsive" id="tbl"></table></div>
+  <p class="help" id="count" style="margin-top:10px"></p>
+</template>
+<script src="assets/data.js"></script>
+<script src="assets/changes.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const { $, esc, money, badge, person, valueTag, clientTag, icons, shell, toast, D } = UI;
+shell("Processos");
+const P = new URLSearchParams(location.search);
+const st = { q: P.get("q") || "", cliente: P.get("cliente") || "", estado: P.get("estado") || "", valor: P.get("valor") || "", fase: "", sort: "data", dir: -1 };
+const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+$("#q").value = st.q;
+$("#cliente").innerHTML += D.CLIENT_NAMES.map((c) => `<option ${c === st.cliente ? "selected" : ""}>${c}</option>`).join("");
+const base = () => D.procs.filter((p) => {
+  const q = norm(st.q);
+  // a busca considera o nome normalizado da cliente: "Royal Air Maroc" acha também "Royalair Maroc" e "ROYAL AIR MAROC"
+  if (q && !(norm(p.numero).includes(q) || norm(p.titulo).includes(q) || norm(p.sugestao).includes(q))) return false;
+  if (st.cliente && p.sugestao !== st.cliente) return false;
+  return true;
+});
+function chips(el, key, opts) {
+  const b = base();
+  $(el).innerHTML = [["", "Todos", b.length], ...opts.map(([v, l, f]) => [v, l, b.filter(f).length])].map(([v, l, n]) =>
+    `<button class="chip ${st[key] === v ? "on" : ""}" data-v="${v}" aria-pressed="${st[key] === v}" ${n === 0 && st[key] !== v ? "disabled" : ""}>${l} <span class="n">${n}</span></button>`).join("");
+  $(el).onclick = (e) => { const c = e.target.closest(".chip"); if (!c) return; st[key] = c.dataset.v; render(); };
+}
+const COLS = [["numero", "Número"], ["partes", "Partes e cliente"], ["estado", "Situação"], ["resp", "Com quem"], ["valor", "Valor"], ["data", "Última mudança"]];
+function render() {
+  chips("#fEstado", "estado", Object.entries(D.STATES).filter(([k]) => D.procs.some((p) => p.estado === k)).map(([k, s]) => [k, s.label, (p) => p.estado === k]));
+  chips("#fValor", "valor", [["prov", "Provisão (antes da sentença)", (p) => p.tipo === "prov"], ["cond", "Condenação", (p) => p.tipo === "cond"], ["none", "Sem valor ainda", (p) => p.tipo === "none"]]);
+  chips("#fFase", "fase", ["Inicial", "Sentença", "Execução"].map((f) => [f, f, (p) => p.fase === f]));
+  let rows = base().filter((p) => (!st.estado || p.estado === st.estado) && (!st.valor || p.tipo === st.valor) && (!st.fase || p.fase === st.fase));
+  const key = { numero: (p) => p.numero, partes: (p) => p.autor, estado: (p) => p.estado, resp: (p) => D.TEAM[p.resp].nome, valor: (p) => p.valor ?? -1, data: (p) => p.sort }[st.sort];
+  rows.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : 0) * st.dir);
+  const hidden = st.q && D.procs.filter((p) => norm(p.titulo).includes(norm(st.q))).length < rows.length;
+  $("#hint").innerHTML = hidden ? `<i data-lucide="info"></i> A busca por "${esc(st.q)}" também trouxe processos em que a cliente aparece com outra grafia nos autos.` : "";
+  $("#tbl").innerHTML = `<thead><tr>${COLS.map(([k, l]) => `<th ${k === "valor" ? 'class="num"' : ""} aria-sort="${st.sort === k ? (st.dir > 0 ? "ascending" : "descending") : "none"}"><button class="btn ghost" style="height:auto;padding:0;font-size:12px;color:inherit" data-k="${k}">${l} <i data-lucide="${st.sort === k ? (st.dir > 0 ? "arrow-up" : "arrow-down") : "arrow-up-down"}"></i></button></th>`).join("")}</tr></thead><tbody>` +
+    rows.map((p) => `<tr>
+      <td data-l="Número"><span class="mono" style="font-size:12px"><a href="processo.html?id=${p.id}">${p.numero}</a></span><div class="help">${p.tribunal} · ${p.fase}</div></td>
+      <td data-l="Partes"><div>${esc(p.autor)}</div><div style="margin-top:4px">${clientTag(p)}</div></td>
+      <td data-l="Situação">${badge(p.estado)}<div class="help" style="margin-top:4px;max-width:260px">${esc(p.motivo)}</div></td>
+      <td data-l="Com quem"><span class="row" style="gap:6px">${person(p.resp)}<span>${D.TEAM[p.resp].nome.split(" ")[0]}</span></span></td>
+      <td class="num" data-l="Valor">${p.valor != null ? `<div class="money">${money(p.valor)}</div>` : ""}<div style="margin-top:2px">${valueTag(p)}</div></td>
+      <td data-l="Última mudança" style="white-space:nowrap">${p.data.replace(" ", ", ")}</td></tr>`).join("") + `</tbody>`;
+  $("#hint").innerHTML += UI.chg("lista-situacao", "Mudou: colunas e ordem");
+  $("#count").textContent = `${rows.length} de ${D.procs.length} processos`;
+  history.replaceState(null, "", "?" + new URLSearchParams(Object.fromEntries(Object.entries({ q: st.q, cliente: st.cliente, estado: st.estado, valor: st.valor }).filter(([, v]) => v))).toString());
+  icons();
+}
+$("#tbl").addEventListener("click", (e) => { const b = e.target.closest("[data-k]"); if (!b) return; st.dir = st.sort === b.dataset.k ? -st.dir : -1; st.sort = b.dataset.k; render(); });
+$("#q").oninput = (e) => { st.q = e.target.value; render(); };
+$("#cliente").onchange = (e) => { st.cliente = e.target.value; render(); };
+$("#csv").onclick = () => toast("Protótipo: o CSV sairia com as colunas da tela, inclusive cliente, situação, responsável e tipo de valor.");
+render();
+</script>
+</body>
+</html>

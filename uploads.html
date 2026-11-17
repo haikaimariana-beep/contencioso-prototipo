@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uploads · Contencioso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+<template>
+  <h1>Uploads</h1>
+  <p class="muted" style="margin:6px 0 0;max-width:720px">Envie os PDFs dos autos de uma vez, até de processos diferentes. O sistema acha o número do processo em cada arquivo e põe o documento no processo certo, ou cria o processo. Quando não tiver certeza, ele pergunta aqui em cima.</p>
+
+  <!-- o que precisa da pessoa vem antes da área de envio (com zoom de 200% continua na primeira tela) -->
+  <section class="card" style="margin-top:20px" id="pend" aria-labelledby="pT">
+    <div class="card-h"><div><h2 id="pT">Aguardando sua escolha <span class="badge plain" style="--c:var(--state-needs_documents);margin-left:6px" id="pN"></span> <span data-c="up-topo"></span></h2><p>Arquivos em que o sistema não achou o número do processo.</p></div></div>
+    <div class="card-b" id="pendList"></div>
+  </section>
+
+  <section class="card" style="margin-top:16px"><div class="card-b"><div class="drop">
+    <i data-lucide="upload-cloud" style="width:28px;height:28px;color:var(--brand-400)"></i>
+    <h3 style="margin-top:8px">Arraste os PDFs aqui</h3>
+    <p class="muted" style="margin:4px 0 12px">Pode ser de processos diferentes. Cada arquivo vai para o processo do número que está nele. Só PDF.</p>
+    <div class="row" style="justify-content:center;flex-wrap:wrap"><label class="field" style="flex-direction:row;align-items:center" for="tipo">Tipo do envio</label>
+      <select class="select" id="tipo"><option>Processo completo</option><option>Peça avulsa</option></select>
+      <button class="btn primary" onclick="UI.toast('Protótipo: abriria a escolha de arquivos.')">Escolher arquivos</button></div></div></div></section>
+
+  <section class="card" style="margin-top:16px" aria-labelledby="lT">
+    <div class="card-h"><div><h2 id="lT">Lendo o texto</h2><p>O sistema está procurando o número do processo. Esta área se atualiza sozinha.</p></div></div>
+    <div class="card-b muted">Nenhum arquivo sendo lido agora.</div>
+  </section>
+
+  <section class="card" style="margin-top:16px" aria-labelledby="rT">
+    <div class="card-h" style="flex-wrap:wrap"><div style="flex:1"><h2 id="rT">Resolvidos · 31 <span data-c="up-resolvidos"></span></h2><p>Arquivos que já foram para um processo.</p></div>
+      <input class="input" placeholder="Filtrar por arquivo, número ou parte" aria-label="Filtrar resolvidos" id="rq" style="width:280px"></div>
+    <div class="card-b" style="padding-top:8px"><div class="table-wrap" style="border:0"><table class="responsive" id="res"></table></div></div>
+  </section>
+</template>
+<script src="assets/data.js"></script>
+<script src="assets/changes.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const { $, $$, esc, badge, icons, shell, toast, confirmDialog, D, proc } = UI;
+shell("Uploads");
+const U = D.UPLOADS_PENDENTES;
+$("#pN").textContent = U.length;
+$("#pendList").innerHTML = U.map((u, i) => `
+  <div class="row" style="align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div class="thumb" aria-hidden="true"><b>${esc(u.trecho.slice(0, 40))}</b><br>${esc(u.trecho.slice(40))}</div>
+    <div style="flex:1;min-width:280px">
+      <div class="row" style="flex-wrap:wrap;gap:8px"><b>${esc(u.nome)}</b><span class="help">${u.paginas} pág. · ${u.tamanho} · enviado por ${D.TEAM[u.por].nome} em ${u.enviado}</span></div>
+      <p class="muted" style="margin:6px 0 10px"><i data-lucide="triangle-alert" style="color:var(--caution);vertical-align:-3px"></i> Não encontramos o número do processo no texto. Pelo conteúdo, este parece ser o processo abaixo.</p>
+      <button class="link" style="font-size:12px" data-prev><i data-lucide="eye"></i>Ver o documento</button>
+      <fieldset style="border:0;padding:0;margin:12px 0 0"><legend class="field" style="margin-bottom:4px">Qual é o processo deste documento? ${UI.chg("up-sugestao")}</legend>
+        ${u.sugestoes.map((s, j) => { const p = proc(s.id); return `<label class="sugg"><input type="radio" name="p${i}" value="${p.id}" ${j === 0 ? "checked" : ""}><span style="flex:1"><span class="mono" style="font-size:12px">${p.numero}</span> · ${esc(p.autor)}<span class="help" style="display:block">Sugestão: ${esc(s.porque)}</span></span>${badge(p.estado)}</label>`; }).join("")}
+        <label class="sugg"><input type="radio" name="p${i}" value="outro"><span style="flex:1">Outro processo</span></label>
+        <div id="outro${i}" hidden style="margin-top:8px"><label class="field" for="o${i}">Número do processo ou nome de uma parte</label>
+          <input class="input" id="o${i}" style="width:100%;max-width:420px" placeholder="Ex.: 4035231 ou Camila" autocomplete="off">
+          <div class="err" id="oe${i}" hidden></div><div id="ol${i}"></div></div>
+      </fieldset>
+      <div class="row" style="margin-top:14px;flex-wrap:wrap"><button class="btn primary" data-ok="${i}"><i data-lucide="link"></i>Incluir no processo</button><button class="btn ghost danger" data-disc><i data-lucide="trash-2"></i>Descartar arquivo</button></div>
+    </div></div>`).join("");
+const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+$$("input[name=p0]").forEach((r) => r.onchange = () => { $("#outro0").hidden = r.value !== "outro"; if (r.value === "outro") $("#o0").focus(); });
+$("#o0").oninput = (e) => {
+  const q = norm(e.target.value);
+  const err = $("#oe0");
+  if (/[a-z]/.test(q) && q.length < 3) { err.hidden = false; err.textContent = "Digite pelo menos 3 letras do nome."; } else err.hidden = true;
+  const hits = q.length >= 3 ? D.procs.filter((p) => norm(p.numero).includes(q) || norm(p.titulo).includes(q)).slice(0, 5) : [];
+  $("#ol0").innerHTML = hits.map((p) => `<label class="sugg"><input type="radio" name="p0b" value="${p.id}"><span class="mono" style="font-size:12px">${p.numero}</span><span class="muted">${esc(p.autor)}</span></label>`).join("") || (q.length >= 3 ? `<p class="help">Nenhum processo com "${esc(e.target.value)}". Se o número estiver certo, o processo será criado.</p>` : "");
+};
+$("[data-prev]").onclick = () => UI.openSide(`<div class="side-h"><i data-lucide="file-text"></i><h2 style="flex:1">${esc(U[0].nome)}</h2><button class="icon-btn" data-close aria-label="Fechar"><i data-lucide="x"></i></button></div><div class="side-b"><div class="page"><div class="pg">pág. 1</div>${esc(U[0].trecho)}</div><p class="help">Conteúdo ilustrativo do protótipo.</p></div>`);
+$("[data-ok]").onclick = () => { const v = $("input[name=p0]:checked").value; const id = v === "outro" ? $("input[name=p0b]:checked")?.value : v;
+  if (!id) { toast("Escolha um processo da lista."); return; }
+  const p = proc(id); confirmDialog({ title: "Incluir neste processo?", body: `<p>O arquivo entra em <b class="mono">${p.numero}</b> (${esc(p.autor)}) e a leitura dos autos é refeita com ele.</p>`, ok: "Incluir no processo", onOk: () => toast("Protótipo: arquivo incluído; a leitura começou.") }); };
+$("[data-disc]").onclick = () => confirmDialog({ title: "Descartar este arquivo?", body: "<p>Ele sai dos Uploads e não vai para nenhum processo.</p>", ok: "Descartar", danger: true, onOk: () => toast("Protótipo: arquivo descartado.") });
+const resolved = D.procs.slice(0, 31).map((p, i) => ({ arquivo: i % 3 === 0 ? "Autos completos" : i % 3 === 1 ? "Autos · parte 1" : "Íntegra do processo", pags: 40 + (i * 13) % 300, p, quando: p.data }));
+const renderRes = () => { const q = norm($("#rq").value); $("#res").innerHTML = `<thead><tr><th>Arquivo</th><th>Foi para</th><th>Como</th><th>Quando</th></tr></thead><tbody>` +
+  resolved.filter((r) => !q || norm(r.arquivo + r.p.numero + r.p.titulo).includes(q)).map((r) => `<tr><td data-l="Arquivo"><i data-lucide="file-text" style="vertical-align:-3px"></i> ${r.arquivo}<div class="help">${r.pags} pág.</div></td><td data-l="Foi para"><a class="link mono" style="font-size:12px" href="processo.html?id=${r.p.id}">${r.p.numero}</a><div class="help">${esc(r.p.autor)}</div></td><td data-l="Como"><span class="tag">Número achado no texto</span></td><td data-l="Quando">${r.quando}</td></tr>`).join("") + `</tbody>`; icons(); };
+$("#rq").oninput = renderRes; renderRes();
+</script>
+</body>
+</html>
